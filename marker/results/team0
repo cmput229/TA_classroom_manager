@@ -1,0 +1,34 @@
+False
+Test Case 1: FAILED
+	Expected: 16777216
+	Received: 1
+Test Case 2: FAILED
+	Expected: 33554432
+	Received: 1
+Test Case 3: FAILED
+	Expected: 50331648
+	Received: 1
+Test Case 4: FAILED
+	Expected: 67108864
+	Received: 1
+Test Case 5: FAILED
+	Expected: 83886080
+	Received: 1
+Test Case 6: FAILED
+	Expected: 100663296
+	Received: 1
+Test Case 7: FAILED
+	Expected: 117440512
+	Received: 1
+Test Case 8: FAILED
+	Expected: 134217728
+	Received: 1
+Test Case 9: FAILED
+	Expected: 150994944
+	Received: 1
+Test Case 10: FAILED
+	Expected: 167772160
+	Received: 1
+Test Case 11: FAILED
+	Expected: -1
+	Received: 1

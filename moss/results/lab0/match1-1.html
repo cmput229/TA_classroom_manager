@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<TITLE>./marker/lab0/team1.s</TITLE>
+</HEAD>
+<BODY BGCOLOR=white>
+<HR>
+./marker/lab0/team3.s<p><PRE>
+#---------------------------------------------------------------
+# Assignment:           &lt;number&gt;
+# Due Date:             &lt;date&gt;
+# Name:                 &lt;name&gt;
+# Unix ID:              &lt;ID&gt;
+# Lecture Section:      &lt;section&gt;
+# Instructor:           &lt;instructor&gt;
+# Lab Section:          &lt;section&gt; &lt;time&gt;
+# Teaching Assistant:   &lt;TA&gt;
+#---------------------------------------------------------------
+
+#---------------------------------------------------------------
+#
+#   Comments section:
+#       Please add your comments here!
+#   Register usage:
+#       Please note which registers are used for which purposes here!
+#
+#---------------------------------------------------------------
+
+.data
+
+.text
+
+main:
+	li   $v0, 5				# syscall readint
+	syscall					# $v0 &lt;- 0xWWXXYYZZ
+
+    add  $a0, $v0, $0       # $a0 &lt;- 0xWWXXYYZZ
+    addi $t0, $0, 0xFF      # $t0 &lt;- 0x000000FF
+    and  $v0, $t0, $a0      # $v0 &lt;- 0x000000ZZ
+    sll  $v0, $v0, 24       # $v0 &lt;- 0xZZ000000
+    sll  $t0, $t0, 8        # $t0 &lt;- 0x0000FF00
+    and  $t1, $t0, $v0      # $t1 &lt;- 0x0000YY00
+    sll  $t1, $t1, 8        # $t1 &lt;- 0x00YY0000
+    or   $a0, $a0, $t1      # $a0 &lt;- 0xZZYY0000
+    sll  $t0, $t0, 8        # $t0 &lt;- 0x00FF0000
+    and  $t1, $t1, $v0      # $t1 &lt;- 0x00XX0000
+    srl  $t1, $t1, 8        # $t1 &lt;- 0x0000XX00
+    or   $a0, $a0, $t1      # $a0 &lt;- 0xZZYYXX00
+    sll  $t0, $t0, 8        # $t0 &lt;- 0xFF000000
+    and  $t1, $v0, $t0      # $t1 &lt;- 0xWW000000
+<A NAME="0"></A><FONT color = #FF0000><A HREF="match1-0.html#0" TARGET="0"><IMG SRC="tm_0_14.gif" ALT="other" BORDER="0" ALIGN=left></A>
+
+    srl  $t1, $t1, 24       # $t1 &lt;- 0x000000WW
+    or   $a0, $a0, $t1      # $a0 &lt;- 0xZZYYXX00
+
+	li	$v0, 1				# syscall printint
+	syscall
+	jr	$ra					# Return
+</FONT></PRE>
+</PRE>
+</BODY>
+</HTML>
