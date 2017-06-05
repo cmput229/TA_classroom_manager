@@ -139,8 +139,6 @@ def print_results():
 # Austin intends to grade labs with a binary blob file
 # TODO: Get that working.
 def input_blob(test, subm, resl, diag):
-    print "TODO!"
-    # proc = Popen(["spim", "-file", "./marker/{}/{}".format(lab, fn)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     pass
 
 # Expectation: Submission files will be  ./marker/submission/lab<n>/team.s

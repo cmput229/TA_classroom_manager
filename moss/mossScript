@@ -31,7 +31,7 @@
 PROG="$1"
 LAB="$2"
 
-RESULTS=$(./moss/moss -l $PROG -b ./base/$LAB/$LAB.s ./marker/$LAB/*.s | grep '^http')
+RESULTS=$(./moss/moss -l $PROG -b ./marker/base/$LAB/$LAB.s ./marker/$LAB/team*/*.s | grep '^http')
 
 # The results pages are saved locally in the ./results/<lab>/
 # The index page is renamed from <number>.html to index.html

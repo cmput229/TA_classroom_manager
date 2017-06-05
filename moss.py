@@ -9,8 +9,8 @@ import subprocess
 # Expects base code to be in ./<lab>/instructor/base/
 # Want to handle more than just *.s; just concat. all *.* in /base/
 def makeBase(lab, suffix = "s"):
-    base_dir = "./base/{}/".format(lab)
-    base_file = "./base/{}.{}".format(lab, suffix)
+    base_dir = "./marker/base/{}/".format(lab)
+    base_file = "./marker/base/{}.{}".format(lab, suffix)
 
     files = os.listdir(base_dir)
     files.sort()

@@ -8,6 +8,8 @@ import time
 import sys
 import os
 
+import spimgrader as grader
+
 # REFERENCE
 #----------------------------------------------------------------------------------------------
 # Oauth tokens in gitpython    
@@ -242,13 +244,13 @@ class Manager():
         teams.remove("Students")
         for team in teams:
             url = "{}{}".format(self.url, "{}_{}".format(team, lab))
-            clone_path = "./{}/{}/".format(lab, team)
+            clone_path = "./submissions/{}/{}/".format(lab, team)
             if os.path.exists(clone_path):
                 shutil.rmtree(clone_path)
             Repo.clone_from(self.insert_auth(url), clone_path)
 
         base_url = "{}{}".format(self.url, lab)
-        base_path = "./{}/instructor/".format(lab)
+        base_path = "./submissions/{}/instructor/".format(lab)
         if os.path.exists(base_path):
             shutil.rmtree(base_path)
         Repo.clone_from(self.insert_auth(base_url), base_path)
@@ -360,6 +362,46 @@ class Manager():
         url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
         return url
 
+    def get_commits(self, team, lab):
+        name = "{}_{}".format(team, lab)
+        repo = self.org.get_repo(name)
+        commits = [c for c in repo.get_commits()]
+        return commits
+        # for c in commits:
+        #    print "{}: {}".format(c.commit.author.name, c.commit.author.date)
+
+    def get_deadline(self, lab):
+        deadlines_file = open("./class/deadlines.csv", "r")
+        d = deadlines_file.readlines()
+        deadlines_file.close()
+
+        deadlines = {}
+        for line in d:
+            l, date = line.split(",")
+            deadlines[l] = date
+        return deadlines[lab]
+
+    def get_repo_by_deadline(self, team, lab):
+        deadline = self.get_deadline(lab)
+        commits = self.get_commits(team, lab)
+        commit = commits[0]
+
+        for c in commits[1:]:
+            date = time.strptime(str(c.commit.author.date), "%Y-%m-%d %H:%M:%S")
+            if date <= deadline:
+                commit = c
+            else:
+                break
+
+        return commit
+
+    # After pulling:
+    #   
+    def migrate_files(self):
+        pass
+        
+            
+
 # Purpose:
 #   Returns a dictionary used to represent default values for the manager to use.
 def defaults():
@@ -420,6 +462,7 @@ This is a list of flags on the command-line:
 -s: distribute base repo (-r <repo>) to teams on GitHub ([s]et repos)
 -n: notify students of repo distribution                ([n]otify)
 -g: collect repos (-r <base_repo>) from students        ([g]et repos)
+-m: mark repos
 -x: clear local repos (-r <assignment>)
 -X: clear teams & repos on GitHub
 --------------------------------------------------------------------
@@ -487,6 +530,9 @@ This is a list of flags on the command-line:
 
     if "-g" in args:
         m.get_repos(repo_name)                  # get github repos
+
+    if "-m" in args:
+        grader.main(repo_name)
 
     if "-x" in args:
         print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(repo_name)
