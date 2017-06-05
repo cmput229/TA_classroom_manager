@@ -267,8 +267,6 @@ class Manager():
             shutil.rmtree(base_path)
         Repo.clone_from(self.insert_auth(base_url), base_path)
 
-
-
     # Param:
     #   lab: String lab
     # Purpose:
@@ -282,9 +280,12 @@ class Manager():
         for team in teams:
             if team.name != "Students":
                 for member in team.get_members():
+                    print member.login
+                    print member.email
+                    print member.name
                     contact = contacts[member.login]
                     url = urls[team.name][lab]
-                    notify(contact, team.name, lab, url)
+                    # notify(contact, team.name, lab, url)
 
 
     # Param:
@@ -424,9 +425,18 @@ class Manager():
         return commit
 
     # After pulling:
-    #   
-    def migrate_files(self):
-        pass
+    #   repos are in "./submissions/<lab>/<team>/
+    # Grader expects them in:
+    #   ./marker/<lab>/<team>
+    def migrate_files(self, lab):
+        teams = os.listdir("./submissions/{}/".format(lab))
+        for team in teams:
+            source = "./submissions/{}/{}/".format(lab, team)
+            dest = "./marker/{}/{}/".format(lab, team)
+            if os.path.isdir(dest):
+                shutil.rmtree(dest)
+            shutil.copytree(source, dest)
+
 
 # Purpose:
 #   Returns a dictionary used to represent default values for the manager to use.
@@ -553,11 +563,13 @@ This is a list of flags on the command-line:
     
     if "-n" in args:
         m.notify_all(repo_name)
+        return
 
     if "-g" in args:
         m.get_repos(repo_name)                  # get github repos
 
     if "-m" in args:
+        # m.migrate_files(repo_name)
         grader.main(repo_name)
 
     if "-x" in args:

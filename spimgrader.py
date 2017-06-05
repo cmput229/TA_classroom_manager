@@ -13,7 +13,7 @@ import os, time, re, sys
 from subprocess import Popen, PIPE, STDOUT
 
 def run(lab, fn, sample_input='\n'):
-    proc = Popen(["spim", "-file", "./marker/{}/{}".format(lab, fn)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    proc = Popen(["spim", "-file", "./submissions/{}/{}/submission/{}.s".format(lab, fn, lab)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     proc.stdin.write(sample_input)
     return proc 
 
@@ -34,9 +34,11 @@ def gather_output(p, f):
     for proc in p:
         time.sleep(.1)
         if proc.poll() is None:
+            print "Sleeping"
             #process is either hanging or being slow
-            time.sleep(5)
+            time.sleep(.5)
             if proc.poll() is None:
+                print "Killing the process"
                 proc.kill()
                 f.write("Process hung; no results to report\n")
                 continue
@@ -59,9 +61,7 @@ def grade(lab, outs):
     assert(len(e) == len(r))
     for i in range(len(e)):
         status = "PASSED" if r[i] == e[i] else "FAILED"
-        diag.write("Test Case {}: {}\n".format(i+1, status))
-        diag.write("\tExpected: {}".format(e[i]))
-        diag.write("\tReceived: {}".format(r[i]))
+        diag.write("Test Case {}:\t{}\tExpected: {}\tReceived: {}\n".format(i+1, status, e[i].strip(), r[i].strip()))
         if status == "FAILED":
             passed = False
     outs.close()
@@ -99,7 +99,9 @@ def input_lines(lab):
     cases = cases_file.readlines()
     cases_file.close()
     
-    submissions = os.listdir("./marker/{}/".format(lab))
+    submissions = os.listdir("./submissions/{}/".format(lab))
+    submissions.remove("instructor")
+
     for submission in submissions:
         #cycle through samples to test:
         output_file = ""
@@ -109,7 +111,7 @@ def input_lines(lab):
             #create process
             p = run(lab, submission, sample_input)
             processes.append(p)
-        output_file = generate_filename(submission)
+        output_file = submission    # Currently submission is team_name
         gather_output(processes, output_file)
         passed = grade(lab, output_file)
         update_results(output_file, passed)
@@ -136,43 +138,69 @@ def print_results():
         print f.read()
         f.close()
 
+def write_summary(lab):
+    if not os.path.isdir("./marker/summary/"):
+        os.mkdir("./marker/summary/")
+    cases = open("./marker/test_cases/{}".format(lab), "r")
+    num_case = len(cases.readlines())
+    cases.close()
+    teams = os.listdir("./submissions/{}/".format(lab))
+    teams.remove("instructor")
+    summary = ""
+    
+    for team in teams:
+        num_pass = 0
+        fail_str = "[ "
+        f = open("./marker/results/{}".format(team), "r")
+        lines = f.readlines()
+        lines = lines[1:]
+        for line in lines:
+            if line.split("\t")[1] == "PASSED":
+                num_pass += 1
+            else:
+                fail_str += line.split("\t")[0].split(" ")[2][:-1] + " "
+        fail_str += "]"
+        summary += team + "," + str(num_pass) + "/" + str(num_case) + "," + str(fail_str) + "\n"
+
+    f = open("./marker/summary/{}.csv".format(lab), "w")
+    f.write(summary)
+    f.close()
+
 # Austin intends to grade labs with a binary blob file
 # TODO: Get that working.
 def input_blob(test, subm, resl, diag):
     pass
 
-# Expectation: Submission files will be  ./marker/submission/lab<n>/team.s
+# Expectation: Submission files will be  ./submissions/submission/lab<n>/<team>/
 # Expectation: All test case files for lab<n> will be ./marker/test_cases/lab<n>
 # Expectation: Ditto expectations file.
 # Expectation: Outputs per team will be ./marker/outputs/team/Lab<n>
 # Expectation: Results per team will be ./marker/results/team/Lab<n>
 def main(lab, input_type="line"):
-    #no use in running if content directories aren't present
-    subm = "./marker/{}".format(lab)
+    # No use in running if content directories aren't present.
+    subm = "./submissions/{}".format(lab)
     test = "./marker/test_cases"
+    expc = "./marker/expectations"
+    assert os.path.isdir(subm)
+    assert os.path.isdir(test)
+    assert os.path.isdir(expc)
+    # If we're missing other needed directories, create them.
     outs = "./marker/outputs"
     resl = "./marker/results"
-    expc = "./marker/expectations"
-    assert os.path.isdir(test)
-    assert os.path.isdir(subm)
-    assert os.path.isdir(outs)
-    assert os.path.isdir(resl)
-    assert os.path.isdir(expc)
-    if os.path.isfile("{}/{}".format(subm, ".empty")):
-        os.remove("{}/{}".format(subm, ".empty"))
-    if os.path.isfile("{}/{}".format(test, ".empty")):
-        os.remove("{}/{}".format(test, ".empty"))
-    if os.path.isfile("{}/{}".format(outs, ".empty")):
-        os.remove("{}/{}".format(outs, ".empty"))
-    if os.path.isfile("{}/{}".format(resl, ".empty")):
-        os.remove("{}/{}".format(resl, ".empty"))
-    if os.path.isfile("{}/{}".format(expc, ".empty")):
-        os.remove("{}/{}".format(expc, ".empty"))
+    summ = "./marker/summary/"
+    if not os.path.isdir(outs):
+        os.mkdir(outs)
+    if not os.path.isdir(resl):
+        os.mkdir(resl)
+    if not os.path.isdir(summ):
+        os.mkdir(summ)
+
     if input_type == "line":
         input_lines(lab)
     else:
         input_blob(lab)
-    print_results()
+
+    write_summary(lab)
 
        
 if __name__ == "__main__":
