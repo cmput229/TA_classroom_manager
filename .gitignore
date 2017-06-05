@@ -1,10 +1,10 @@
 **/*~
 **/venv
 *.token
-./marker/base/
-./marker/outputs/
-./marker/results/
-./marker/summary/
+**/marker/base/
+**/marker/outputs/
+**/marker/results/
+**/marker/summary/
 
 
 
