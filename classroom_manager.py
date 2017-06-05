@@ -254,6 +254,9 @@ class Manager():
         teams = self.get_git_teams()
         teams = [team.name for team in teams]
         teams.remove("Students")
+        if not os.path.isdir("./submissions/"):
+            os.mkdir("./submissions/")
+
         for team in teams:
             url = "{}{}".format(self.url, "{}_{}".format(team, lab))
             clone_path = "./submissions/{}/{}/".format(lab, team)
