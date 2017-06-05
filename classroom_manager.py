@@ -9,6 +9,7 @@ import sys
 import os
 
 import spimgrader as grader
+from notifier import send_notification as notify
 
 # REFERENCE
 #----------------------------------------------------------------------------------------------
@@ -201,12 +202,15 @@ class Manager():
     def set_repos(self, lab="testlab1"):
         print "Setting repos for {}.".format(lab)
         teams = self.org.get_teams()
+        urls = self.load_repos()
 
-        repos = {}
         try:
             print "Setting local clone of base code."
             base, url = self.local_clone(lab)
-            repos["instructor"] = {lab: url}
+            if "instructor" in urls:
+                urls["instructor"][lab] = url
+            else:
+                urls["instructor"] = {lab: url}
         except Exception as e:
             print "Error making local clone of base code."
             print e
@@ -216,20 +220,28 @@ class Manager():
             if team.name != "Students":
                 try:
                     print "Assigning " + team.name + " the repo."
-                    team_repo = self.clone(lab, team, base) 
-                    repos[team.name] = team_repo
+                    team_repo = self.clone(lab, team, base)
+                    if team.name in urls:
+                        urls[team.name][lab] = team_repo
+                    else:
+                        urls[team.name] = {lab: team_repo}
                 except Exception as e:
                     print "Error cloning lab for " + team.name
                     print e
-                    time.sleep(5)
                     print "Waiting before trying again."
+                    time.sleep(5)
                     try:
                         print "Assigning " + team.name + " the repo."
                         team_repo = self.clone(lab, team, base) 
-                        repos[team.name] = team_repo
+                        if team.name in urls:
+                            urls[team.name][lab] = team_repo
+                        else:
+                            urls[team.name] = {lab: team_repo}
                     except Exception as e:
                         print "Error cloning lab for " + team.name
                         print e
+    
+        self.write_repos(urls)
 
     # Param:
     #   lab: String
@@ -255,27 +267,25 @@ class Manager():
             shutil.rmtree(base_path)
         Repo.clone_from(self.insert_auth(base_url), base_path)
 
+
+
     # Param:
     #   lab: String lab
     # Purpose:
     #   to iterate over all students by team in order to notify them
     #   that the lab has been assigned.
     def notify_all(self, lab):
-        for team in self.org.get_teams():
+        teams = self.org.get_teams()
+        urls = self.load_repos()
+        contacts = self.load_contacts()
+
+        for team in teams:
             if team.name != "Students":
                 for member in team.get_members():
-                    self.notify(member, team, lab)
+                    contact = contacts[member.login]
+                    url = urls[team.name][lab]
+                    notify(contact, team.name, lab, url)
 
-    # Param:
-    #   member: PyGitHub member
-    #   team:   PyGitHub team
-    #   lab:    String
-    # Purpose:
-    #   Send an email to each member of a team to notify them that their
-    #   repo has been assigned.
-    def notify(self, member, team, lab):
-        # TODO: Send an email to the github email.
-        pass
 
     # Param:
     #   Lab: Which lab/assignment will be deleted
@@ -305,13 +315,14 @@ class Manager():
     # Iterates over all teams in the organization & deletes them.
     def del_git_teams(self):
         teams = self.org.get_teams()
+        teams = [team.name for team in teams]
+        teams.remove("Students")
         for team in teams:
-            if team.name != "Students":
-                members = team.get_members()
-                for member in members:
-                    team.remove_from_members(member)
-                print "Deleting team " + team.name
-                team.delete()
+            members = team.get_members()
+            for member in members:
+                team.remove_from_members(member)
+            print "Deleting team " + team.name
+            team.delete()
 
     # Params:
     #   lab: identifier for the lab, eg "lab1".
@@ -329,7 +340,7 @@ class Manager():
         team_repo = self.org.create_repo(repo_name, team_id=team)
         remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
         remote.push()  
-        return {lab: repo_url}
+        return repo_url
 
     # Param:
     #   lab: string identifier for a lab
@@ -361,6 +372,23 @@ class Manager():
         token = self.get_token()
         url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
         return url
+
+    def load_repos(self):
+        f = open("./class/repos.json", "r")
+        repos = json.load(f)
+        f.close()
+        return repos
+
+    def write_repos(self, urls):
+        f = open("./class/repos.json", "w")
+        repos = json.dump(urls, f)
+        f.close()
+
+    def load_contacts(self):
+        f = open("./class/contacts.json", "r")
+        contacts = json.load(f)
+        f.close()
+        return contacts
 
     def get_commits(self, team, lab):
         name = "{}_{}".format(team, lab)
@@ -399,8 +427,6 @@ class Manager():
     #   
     def migrate_files(self):
         pass
-        
-            
 
 # Purpose:
 #   Returns a dictionary used to represent default values for the manager to use.
