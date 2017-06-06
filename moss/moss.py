@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-import os.path
+import os
 import shutil
 import json
 import subprocess
@@ -9,38 +9,25 @@ import subprocess
 # Expects base code to be in ./<lab>/instructor/base/
 # Want to handle more than just *.s; just concat. all *.* in /base/
 def makeBase(lab, suffix = "s"):
-    base_dir = "./{}/instructor/base/".format(lab)
-    base_file = "./{}/instructor/base.{}".format(lab, suffix)
-
-    if os.path.isfile(base_file):   # Clear old base file
-        os.remove(base_file)
-    files = os.listdir(base_dir)
+    base_dir = "./submissions/{}/base/submission/".format(lab)
+    print base_dir
+    base_files = os.listdir("./submissions/{}/base/submission/".format(lab))
     files.sort()
+    base_flags = ["-b {}".format(f) for f in base_files]
 
-    base = open(base_file, "a")     # Make new base file
-    for f in files:
-        f = open("{}{}".format(base_dir, f), "r")
-        base.write(f.read())
-        f.close()
-    base.close()
-
-    return base_file                # Return path to base file
+    return base_flags
 
 # Expects repos to be gathered when called.
 # Base code to be in ./<lab>/instructor/base/
 # Student submissions to be in ./<lab>/<team>/submission/
 # Archived submissions to be in ./<lab>/archived/
-def submit(lab, base, archives, lang="mips", suffix="s"):
-    # subprocess.call(["chmod", "-R", "764", "./{}/".format(lab)])
+def submit(lab, lang="mips", suffix="s"):
     print "Submitting repos to moss."
 
-    lab_dir = "./{}/*/submission/*.s".format(lab, suffix)
-    if archives:
-        archives = "./{}/archived/*.{}".format(lab, suffix)
-    else:
-        archives = ""
-    
-    base_file = makeBase(lab, suffix)
+    lab_dir = "./submissions/{}/".format(lab)    
+    print lab_dir
+    # base_flags = makeBase(lab, suffix)
+    # print base_flags
     
     command = "mossScript {} {} {} {}".format(lang, base_file, lab_dir, archives)
     command = command.strip()
@@ -66,7 +53,6 @@ def clear(lab):
 def main():
     lab = "testlab1"
     args = sys.argv
-    base = False
     archives = False 
 
     if "-x" in args:
@@ -84,15 +70,12 @@ def main():
 
     if "-l" in args:
         lab = args[args.index("-l")+1]
-    
-    if "-b" in args:
-        base = True
 
     if "-a" in args:
         archives = True
 
     if "-s" in args:
-        submit(lab, base, archives)
+        submit(lab)
 
 if __name__ == "__main__":
     main()

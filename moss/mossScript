@@ -28,12 +28,16 @@
 #   
 #------------------------------------------------------------------------------
 
-PROG="$1"
-LAB="$2"
+CMD="$@"        # TODO: FIGURE OUT WHAT'S GOING WRONG HERE. This CMD works from commandline, but not from script.
+                #       $PWD is directory of the calling script
+                #       May need to update $PATH
+echo ""
+echo "$CMD"
+echo ""
+RESULTS=$("$CMD" | grep '^http')
+# RESULTS=$(./moss/moss -l $PROG -b ./marker/base/$LAB/$LAB.s ./marker/$LAB/team*/*.s | grep '^http')
 
-RESULTS=$(./moss/moss -l $PROG -b ./marker/base/$LAB/$LAB.s ./marker/$LAB/team*/*.s | grep '^http')
-
-# The results pages are saved locally in the ./results/<lab>/
+# The results pages are saved locally in the ./moss/results/<lab>/
 # The index page is renamed from <number>.html to index.html
 # Noah's wget:
 #   wget -e robots=off -m http://moss.stanford.edu/results/134412096/

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-import os.path
+import os
 import shutil
 import json
 import subprocess
@@ -9,43 +9,37 @@ import subprocess
 # Expects base code to be in ./<lab>/instructor/base/
 # Want to handle more than just *.s; just concat. all *.* in /base/
 def makeBase(lab, suffix = "s"):
-    base_dir = "./marker/base/{}/".format(lab)
-    base_file = "./marker/base/{}.{}".format(lab, suffix)
-
-    files = os.listdir(base_dir)
-    files.sort()
-
-    base = open(base_file, "w")     # Make new base file
-    for f in files:
-        f = open("{}{}".format(base_dir, f), "r")
-        base.write(f.read())
-        f.close()
-    base.close()
-
-    return base_file                # Return path to base file
+    base_dir = "./submissions/{}/base/submission/".format(lab)
+    base_files = os.listdir("./submissions/{}/base/submission/".format(lab))
+    base_files.sort()
+    base_flags = ["-b {}{}".format(base_dir, f) for f in base_files]
+    return base_flags
 
 # Expects repos to be gathered when called.
-# Base code to be in ./marker/<lab>/instructor/base/
-# Student submissions to be in ./marker/<lab>/<team>/submission/
-# Archived submissions to be in ./marker/<lab>/archived/
+# Base code to be in ./<lab>/instructor/base/
+# Student submissions to be in ./<lab>/<team>/submission/
+# Archived submissions to be in ./<lab>/archived/
 def submit(lab, lang="mips", suffix="s"):
     print "Submitting repos to moss."
 
-    lab_dir = "./marker/{}/*.{}".format(lab, suffix)
-    if os.path.isdir("./marker/{}/archived/".format(lab)):
-        archives = "./marker/{}/archived/*.{}".format(lab, suffix)
-    else:
-        archives = ""
-
-    if os.path.isdir("./moss/results/{}".format(lab)):
-        shutil.rmtree("./moss/results/".format(lab))
+    lab_dir = "./submissions/{}/".format(lab)    
+    base_flags = makeBase(lab, suffix)
+    submissions = os.listdir(lab_dir)
+    submissions.remove("base")
     
-    base_file = makeBase(lab, suffix)
+    command = "./moss/moss -l {} -d ".format(lang)
+    for base_file in base_flags:
+        command += base_file + " "
     
-    command = "./moss/mossScript {} {} {}".format(lang, lab, archives)
+    for submission in submissions:
+        files = os.listdir("{}{}/submission/".format(lab_dir, submission))
+        for f in files:
+            command += "{}{}/submission/{}".format(lab_dir, submission,f) + " "
     command = command.strip()
-    command = command.split(" ")
-    subprocess.call(command)
+    # command = command.split(" ")
+    subprocess.call(["./moss/mossScript", command])
+
+    # subprocess.call(command)
 
 #------------------------------------------------------------------------------
 # Clears all ./<lab>/ repos from cwd.
@@ -56,7 +50,6 @@ def clear(lab):
 
 # flags:    -l <lab_name>: set lab name
 #           -r <repo_name>: set repo for script
-#           -b: concatenate all base files into one file        (Set [b]ase code)
 #           -s: submit code to moss                             ([S]ubmit)
 #           -g: collect repos (-r <base_repo>) from students    ([G]et repos)
 #           -x: clear local responses from moss
@@ -64,6 +57,7 @@ def clear(lab):
 def main():
     lab = "testlab1"
     args = sys.argv
+    archives = False 
 
     if "-x" in args:
         print "CLEARING RESULTS"
@@ -80,6 +74,9 @@ def main():
 
     if "-l" in args:
         lab = args[args.index("-l")+1]
+
+    if "-a" in args:
+        archives = True
 
     if "-s" in args:
         submit(lab)

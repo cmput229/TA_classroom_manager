@@ -10,6 +10,7 @@ import os
 
 import spimgrader as grader
 from notifier import send_notification as notify
+import moss
 
 # REFERENCE
 #----------------------------------------------------------------------------------------------
@@ -207,10 +208,10 @@ class Manager():
         try:
             print "Setting local clone of base code."
             base, url = self.local_clone(lab)
-            if "instructor" in urls:
-                urls["instructor"][lab] = url
+            if "base" in urls:
+                urls["base"][lab] = url
             else:
-                urls["instructor"] = {lab: url}
+                urls["base"] = {lab: url}
         except Exception as e:
             print "Error making local clone of base code."
             print e
@@ -240,7 +241,8 @@ class Manager():
                     except Exception as e:
                         print "Error cloning lab for " + team.name
                         print e
-    
+        
+        shutil.rmtree("./base/")
         self.write_repos(urls)
 
     # Param:
@@ -265,7 +267,7 @@ class Manager():
             Repo.clone_from(self.insert_auth(url), clone_path)
 
         base_url = "{}{}".format(self.url, lab)
-        base_path = "./submissions/{}/instructor/".format(lab)
+        base_path = "./submissions/{}/base/".format(lab)
         if os.path.exists(base_path):
             shutil.rmtree(base_path)
         Repo.clone_from(self.insert_auth(base_url), base_path)
@@ -319,14 +321,13 @@ class Manager():
     # Iterates over all teams in the organization & deletes them.
     def del_git_teams(self):
         teams = self.org.get_teams()
-        teams = [team.name for team in teams]
-        teams.remove("Students")
         for team in teams:
-            members = team.get_members()
-            for member in members:
-                team.remove_from_members(member)
-            print "Deleting team " + team.name
-            team.delete()
+            if team.name != "Students":
+                members = team.get_members()
+                for member in members:
+                    team.remove_from_members(member)
+                print "Deleting team " + team.name
+                team.delete()
 
     # Params:
     #   lab: identifier for the lab, eg "lab1".
@@ -502,6 +503,7 @@ This is a list of flags on the command-line:
 -n: notify students of repo distribution                ([n]otify)
 -g: collect repos (-r <base_repo>) from students        ([g]et repos)
 -m: mark repos
+-c: compare repos using MOSS
 -x: clear local repos (-r <assignment>)
 -X: clear teams & repos on GitHub
 --------------------------------------------------------------------
@@ -572,8 +574,10 @@ This is a list of flags on the command-line:
         m.get_repos(repo_name)                  # get github repos
 
     if "-m" in args:
-        # m.migrate_files(repo_name)
         grader.main(repo_name)
+
+    if "-c" in args:
+        moss.submit(repo_name)
 
     if "-x" in args:
         print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(repo_name)

@@ -100,7 +100,7 @@ def input_lines(lab):
     cases_file.close()
     
     submissions = os.listdir("./submissions/{}/".format(lab))
-    submissions.remove("instructor")
+    submissions.remove("base")
 
     for submission in submissions:
         #cycle through samples to test:
@@ -145,7 +145,7 @@ def write_summary(lab):
     num_case = len(cases.readlines())
     cases.close()
     teams = os.listdir("./submissions/{}/".format(lab))
-    teams.remove("instructor")
+    teams.remove("base")
     summary = ""
     
     for team in teams:
