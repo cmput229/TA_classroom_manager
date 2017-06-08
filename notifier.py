@@ -15,6 +15,7 @@ def send_notification(recipient, team, lab, url):
 
     # me == the sender's email address
     # you == the recipient's email address
+    # TODO: update this with ualberta CMPUT 229 email account.
     sender = "hoye@ualberta.ca"
     msg['Subject'] = "Repos assigned for {}".format(lab)
     msg['From'] = sender

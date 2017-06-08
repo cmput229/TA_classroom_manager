@@ -63,8 +63,6 @@ def submit(lab, lang="mips", suffix="s", archives=""):
     for submission in submissions:
         command += submission + " "
     command = command.strip()
-    # subprocess.call(command)
-    # command = ["./moss/mossScript"].extend(command)
     subprocess.call(command, shell=True)
 
 
