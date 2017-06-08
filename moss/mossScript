@@ -26,24 +26,22 @@
 #   matching pairwise by file, and can be accessed locally through links as per
 #   and as though it was the original page.
 #   
+#   The results pages are saved locally in the ./moss/results/<lab>/
+#   The index page is renamed from <number>.html to index.html
+#   Noah's wget:
+#       wget -e robots=off -m http://moss.stanford.edu/results/134412096/
+#   wget documentation:
+#      https://www.gnu.org/software/wget/manual/wget.html#Download-Options
+#      https://www.gnu.org/software/wget/manual/html_node/Advanced-Usage.html
 #------------------------------------------------------------------------------
 
-CMD="$@"        # TODO: FIGURE OUT WHAT'S GOING WRONG HERE. This CMD works from commandline, but not from script.
-                #       $PWD is directory of the calling script
-                #       May need to update $PATH
-echo ""
-echo "$CMD"
-echo ""
-RESULTS=$("$CMD" | grep '^http')
-# RESULTS=$(./moss/moss -l $PROG -b ./marker/base/$LAB/$LAB.s ./marker/$LAB/team*/*.s | grep '^http')
+LAB="$1"
+CMD="${@:2}"
 
-# The results pages are saved locally in the ./moss/results/<lab>/
-# The index page is renamed from <number>.html to index.html
-# Noah's wget:
-#   wget -e robots=off -m http://moss.stanford.edu/results/134412096/
-# wget documentation:
-#   https://www.gnu.org/software/wget/manual/wget.html#Download-Options
-#   https://www.gnu.org/software/wget/manual/html_node/Advanced-Usage.html
+# Capture the URL to the comparison
+RESULTS=$($CMD | grep '^http')
+
+# Get local copies by traversing page recursively & resolving links.
 wget -e robots=off -p -r --quiet --convert-links $RESULTS -nH -nd --directory-prefix=./moss/results/$LAB/
 
 # Rename the <number>.html page to index.html

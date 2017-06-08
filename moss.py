@@ -8,38 +8,65 @@ import subprocess
 
 # Expects base code to be in ./<lab>/instructor/base/
 # Want to handle more than just *.s; just concat. all *.* in /base/
-def makeBase(lab, suffix = "s"):
+def getBase(lab, suffix = "s"):
     base_dir = "./submissions/{}/base/submission/".format(lab)
     base_files = os.listdir("./submissions/{}/base/submission/".format(lab))
     base_files.sort()
     base_flags = ["-b {}{}".format(base_dir, f) for f in base_files]
     return base_flags
 
+def getArchives(archives):
+    if archives == "":
+        return ""
+    a = os.listdir("./submissions/{}/".format(archives))
+    for filename in a:
+        newname = "".join(filename.split(" "))
+        if newname != filename:
+            os.rename("./submissions/{}/{}".format(archives, filename), 
+                      "./submissions/{}/{}".format(archives, newname))
+    a = os.listdir("./submissions/{}/".format(archives))
+    a = ["./submissions/{}/\"{}\"".format(archives, filename) for filename in a]
+    return a    
+
+def getSubmissions(lab):
+    submissions = os.listdir("./submissions/{}/".format(lab))
+    submissions.remove("base")
+    submissions = ["./submissions/{}/{}/submission/".format(lab, team) for team in submissions]
+    files = []
+    for submission in submissions:
+        fs = os.listdir(submission)
+        for f in fs:
+            files.append("{}{}".format(submission, f))
+    return files
+
 # Expects repos to be gathered when called.
 # Base code to be in ./<lab>/instructor/base/
 # Student submissions to be in ./<lab>/<team>/submission/
 # Archived submissions to be in ./<lab>/archived/
-def submit(lab, lang="mips", suffix="s"):
+
+# Troubleshooting File name too long error
+# https://stackoverflow.com/questions/6441507/executing-python-scripts-with-subprocess-call-using-shebang
+# User: Chris
+def submit(lab, lang="mips", suffix="s", archives=""):
     print "Submitting repos to moss."
 
     lab_dir = "./submissions/{}/".format(lab)    
-    base_flags = makeBase(lab, suffix)
-    submissions = os.listdir(lab_dir)
-    submissions.remove("base")
+    base_flags = getBase(lab, suffix)
+    archives = getArchives(archives)
+    submissions = getSubmissions(lab)
     
-    command = "./moss/moss -l {} -d ".format(lang)
+    command = "./moss/mossScript {} ./moss/moss -l {} -d ".format(lab, lang)
     for base_file in base_flags:
         command += base_file + " "
-    
+    for archived_file in archives:
+        command += archived_file + " "
     for submission in submissions:
-        files = os.listdir("{}{}/submission/".format(lab_dir, submission))
-        for f in files:
-            command += "{}{}/submission/{}".format(lab_dir, submission,f) + " "
+        command += submission + " "
     command = command.strip()
-    # command = command.split(" ")
-    subprocess.call(["./moss/mossScript", command])
-
     # subprocess.call(command)
+    # command = ["./moss/mossScript"].extend(command)
+    subprocess.call(command, shell=True)
+
 
 #------------------------------------------------------------------------------
 # Clears all ./<lab>/ repos from cwd.

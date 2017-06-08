@@ -58,7 +58,7 @@ class Manager():
     #   and add the GitHub users to the organization's membership.
     # N.B.: class.txt is a text file with student gitIDs on each line
     def set_members(self):
-        class_list = open("./class/class.txt", "r")
+        class_list = open("./config/class.txt", "r")
         c = [line.strip() for line in c]
         class_list.close()
 
@@ -81,8 +81,8 @@ class Manager():
     def set_teams():
         print "Parsing class & team files."
         teams = {}
-        class_list = open("./class/class.txt", "r")
-        teams_list = open("./class/teams.txt", "r")
+        class_list = open("./config/class.txt", "r")
+        teams_list = open("./config/teams.txt", "r")
         t = teams_list.readlines()
         c = class_list.readlines()
         t = [line.strip() for line in t]
@@ -113,7 +113,7 @@ class Manager():
                 teams[team_name] = team
                 i += 1
 
-        out = open("./class/team_defs.json", "w")
+        out = open("./config/team_defs.json", "w")
         json.dump(teams, out)
         out.close()
 
@@ -121,11 +121,11 @@ class Manager():
     #   Write the team defs as csv
     #   Format: <team>,<member>\n
     def json_to_csv(self):
-        f = open("./class/team_defs.json", "r")
+        f = open("./config/team_defs.json", "r")
         teams = json.load(f)
         f.close()
 
-        out = open("./class/team_defs.csv", "w")
+        out = open("./config/team_defs.csv", "w")
         for team in teams:
             for member in teams[team]:
                 out.write("{},{}\n".format(team,member))
@@ -135,7 +135,7 @@ class Manager():
     #   Write the team defs as csv
     #   Format: <team>,<member>\n
     def git_to_csv(self):
-        out = open("./class/team_defs.csv", "w")
+        out = open("./config/team_defs.csv", "w")
         teams = self.get_git_teams()
         for team in teams:
             members = [m for m in team.get_members()]
@@ -152,7 +152,7 @@ class Manager():
     def set_git_teams(self):
         print "Setting teams on GitHub."
 
-        f = open("./class/team_defs.json", "r")
+        f = open("./config/team_defs.json", "r")
         teams = json.load(f)
         f.close()
 
@@ -379,18 +379,18 @@ class Manager():
         return url
 
     def load_repos(self):
-        f = open("./class/repos.json", "r")
+        f = open("./config/repos.json", "r")
         repos = json.load(f)
         f.close()
         return repos
 
     def write_repos(self, urls):
-        f = open("./class/repos.json", "w")
+        f = open("./config/repos.json", "w")
         repos = json.dump(urls, f)
         f.close()
 
     def load_contacts(self):
-        f = open("./class/contacts.json", "r")
+        f = open("./config/contacts.json", "r")
         contacts = json.load(f)
         f.close()
         return contacts
@@ -404,7 +404,7 @@ class Manager():
         #    print "{}: {}".format(c.commit.author.name, c.commit.author.date)
 
     def get_deadline(self, lab):
-        deadlines_file = open("./class/deadlines.csv", "r")
+        deadlines_file = open("./config/deadlines.csv", "r")
         d = deadlines_file.readlines()
         deadlines_file.close()
 
@@ -441,12 +441,15 @@ class Manager():
                 shutil.rmtree(dest)
             shutil.copytree(source, dest)
 
+    def set_archives(archives):
+        self.archives = archives
+
 
 # Purpose:
 #   Returns a dictionary used to represent default values for the manager to use.
 def defaults():
     try:
-        f = open("./class/defaults.json", "r")
+        f = open("./config/defaults.json", "r")
         defaults = json.load(f)
         f.close()   
         return defaults
@@ -460,11 +463,11 @@ def defaults():
 #   Updates the default values used for the manager to the most-recently used ones.
 def update(field, new_value):
     try:
-        f = open("./class/defaults.json", "r")
+        f = open("./config/defaults.json", "r")
         defaults = json.load(f)
         f.close()
         defaults[field] = new_value
-        f = open("./class/defaults.json", "w")
+        f = open("./config/defaults.json", "w")
         json.dump(defaults, f)
         return
     except:
@@ -481,6 +484,7 @@ def update(field, new_value):
 -s: distribute base repo (-r <repo>) to teams on GitHub ([s]et repos)
 -n: notify students of repo distribution                ([n]otify)
 -g: collect repos (-r <base_repo>) from students        ([g]et repos)
+-A <archive_folder>: set archive directory              ([a]rchive set)
 -x: clear local repos (-r <assignment>)
 -X: clear teams & repos on GitHub
 '''
@@ -488,6 +492,7 @@ def update(field, new_value):
 def main():
     org_name = ""
     repo_name = ""
+    arch_name = ""
     args = sys.argv
 
     if "-h" in args:
@@ -570,6 +575,9 @@ This is a list of flags on the command-line:
         m.notify_all(repo_name)
         return
 
+    if "-A" in args:
+        arch_name = args[args.index("-A")+1]
+
     if "-g" in args:
         m.get_repos(repo_name)                  # get github repos
 
@@ -577,7 +585,7 @@ This is a list of flags on the command-line:
         grader.main(repo_name)
 
     if "-c" in args:
-        moss.submit(repo_name)
+        moss.submit(repo_name, archives=arch_name)
 
     if "-x" in args:
         print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(repo_name)
