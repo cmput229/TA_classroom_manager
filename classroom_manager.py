@@ -161,10 +161,10 @@ class Manager():
             try:
                 t = self.org.create_team(team)
                 print "Created " + team + " on GitHub."
+                for member in teams[team]:
+                    t.add_to_members(self.hub.get_user(member))
             except:
                 print "Error creating team: team {} already exists.".format(team)
-            for member in teams[team]:
-                t.add_to_members(self.hub.get_user(member))
     
     # Purpose:
     #   Gets the PyGitHub teams
@@ -280,18 +280,16 @@ class Manager():
     def notify_all(self, lab):
         teams = self.org.get_teams()
         urls = self.load_repos()
-        contacts = self.load_contacts()
 
         for team in teams:
             if team.name != "Students":
                 for member in team.get_members():
-                    print member.login
-                    print member.email
-                    print member.name
-                    contact = contacts[member.login]
+                    contact = member.email
                     url = urls[team.name][lab]
-                    # notify(contact, team.name, lab, url)
-
+                    if contact != None:
+                        notify(contact, team.name, lab, url)
+                    else:
+                        print "{} has not set their email to be public.".format(member.login)
 
     # Param:
     #   Lab: Which lab/assignment will be deleted
@@ -388,12 +386,6 @@ class Manager():
         f = open("./config/repos.json", "w")
         repos = json.dump(urls, f)
         f.close()
-
-    def load_contacts(self):
-        f = open("./config/contacts.json", "r")
-        contacts = json.load(f)
-        f.close()
-        return contacts
 
     def get_commits(self, team, lab):
         name = "{}_{}".format(team, lab)
