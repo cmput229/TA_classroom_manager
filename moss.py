@@ -54,7 +54,10 @@ def submit(lab, lang="mips", suffix="s", archives=""):
     base_flags = getBase(lab, suffix)
     archives = getArchives(archives)
     submissions = getSubmissions(lab)
-    
+
+    # W/pairwise comparison
+    # command = "./moss/mossScript {} ./moss/moss -l {} ".format(lab, lang)    
+    # Wout/pairwise comparison
     command = "./moss/mossScript {} ./moss/moss -l {} -d ".format(lab, lang)
     for base_file in base_flags:
         command += base_file + " "
@@ -63,6 +66,11 @@ def submit(lab, lang="mips", suffix="s", archives=""):
     for submission in submissions:
         command += submission + " "
     command = command.strip()
+
+    if os.path.isdir("./moss/results/{}".format(lab)):
+        shutil.rmtree("./moss/results/{}".format(lab))
+        os.mkdir("./moss/results/{}".format(lab))
+
     subprocess.call(command, shell=True)
 
 
