@@ -64,7 +64,10 @@ def parse_flag(flag, args):
         if args[end][0] == "-":
             break
         end += 1
-    return args[start:end]
+    if start == end:
+        return [""]
+    else:
+        return args[start:end]
 
 def main():
     org_name = ""

@@ -7,6 +7,7 @@ from git import Repo
 import time
 import sys
 import os
+import subprocess
 
 import spimgrader as grader
 from notifier import send_notification as notify
@@ -260,12 +261,25 @@ class Manager():
             os.mkdir("./submissions/")
 
         for team in teams:
+            print "Getting {}'s repo.".format(team)
             url = "{}{}".format(self.url, "{}_{}".format(team, lab))
             clone_path = "./submissions/{}/{}/".format(lab, team)
             if os.path.exists(clone_path):
                 shutil.rmtree(clone_path)
             Repo.clone_from(self.insert_auth(url), clone_path)
+            # TODO: GET THE COMMIT & CALL THE SCRIPT TO ROLL IT BACK HERE.
+            commit = self.get_repo_by_deadline(team, lab)
+            print commit
+            repo = Repo(clone_path)
+            new_branch = repo.create_head("deadline", commit)
+            repo.head.reference = new_branch
+            # repo.head.reset(index=True, working_tree=True)
 
+            # repo.active_branch.commit = repo.commit(commit)
+            
+            origin = repo.create_remote("deadline", self.insert_auth(url))
+            origin.pull("master")
+        
         base_url = "{}{}".format(self.url, lab)
         base_path = "./submissions/{}/base/".format(lab)
         if os.path.exists(base_path):
@@ -400,25 +414,28 @@ class Manager():
         d = deadlines_file.readlines()
         deadlines_file.close()
 
+        if "\n" in d:
+            d.remove("\n")
+
         deadlines = {}
         for line in d:
             l, date = line.split(",")
             deadlines[l] = date
-        return deadlines[lab]
+        return deadlines[lab].strip()
 
     def get_repo_by_deadline(self, team, lab):
-        deadline = self.get_deadline(lab)
+        deadline = time.strptime(self.get_deadline(lab), "%Y-%m-%d %H:%M:%S")
         commits = self.get_commits(team, lab)
         commit = commits[0]
-
+        print commits
         for c in commits[1:]:
             date = time.strptime(str(c.commit.author.date), "%Y-%m-%d %H:%M:%S")
             if date <= deadline:
                 commit = c
             else:
-                break
+                pass
 
-        return commit
+        return commit.commit.sha
 
     # After pulling:
     #   repos are in "./submissions/<lab>/<team>/
@@ -485,7 +502,7 @@ def main():
     org_name = ""
     repo_name = ""
     arch_name = ""
-    args = sys.argv
+    args = sys.argv    
 
     if "-h" in args:
         print """--------------------------------------------------------------------
