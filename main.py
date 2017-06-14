@@ -4,7 +4,7 @@ import sys
 import json
 
 from utils.classroom_manager import *
-import spimgrader as grader
+from utils import spimgrader as grader
 import utils.moss
 
 # flags:  
@@ -12,7 +12,7 @@ def help():
     return """---------------------------------------------------------------------------------------
 |   This is a list of flags for the command-line:
 |
-|   -D: print defaults
+|   -D: print defaults                                      ([D]efaults)
 |   -o <organization_name>: set organization name           ([o]rg set)
 |   -r <repo_name>: set repo for script                     ([r]epo set)
 |   -A: <archive_folder>: set archive directory             ([a]rchive set)
@@ -22,8 +22,8 @@ def help():
 |   -s: distribute base repo (-r <repo>) to teams on GitHub ([s]et repos)
 |   -n: notify students of repo distribution                ([n]otify)
 |   -g: collect repos (-r <base_repo>) from students        ([g]et repos)
-|   -m: mark repos
-|   -c: compare repos using MOSS
+|   -m: mark repos                                          ([m]ark repos)
+|   -c: compare repos using MOSS                            ([c]ompare)
 |   -x: clear local repos (-r <assignment>)
 |   -X: clear teams & repos on GitHub
 ---------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ def main():
     defs = defaults()
     args = sys.argv
 
-    if "-h" in args:
+    if "-h" in args or "-H" in args or "--help" in args:
         print help()
         return
 
@@ -89,12 +89,15 @@ def main():
     # SETUP
     #----------------------------------------------------------------------------------
     if "-o" in args:
+        print "Updating organization."
         defs["org"] = parse_flag("-o", args)[0]
 
     if "-r" in args:
+        print "Updating repo."
         defs["repo"] = parse_flag("-r", args)[0]
 
     if "-A" in args:
+        print "Updating archives."
         defs["archives"] = parse_flag("-A", args)[0]
     
     update(defs)
@@ -125,19 +128,18 @@ def main():
     
     if "-n" in args:
         m.notify_all(defs["repo"])              # Notification for repo distribution
-        return
 
     if "-g" in args:
-        m.get_repos(defs["repo"])               # get github repos
+        m.get_repos(defs["repo"])               # Get github repos
 
     if "-m" in args:
-        grader.main(defs["repo"])
+        grader.main(defs["repo"])               # Grade with spimgrader
 
     if "-c" in args:
-        moss.submit(defs["repo"], defs["archives"])
+        moss.submit(defs["repo"], archives=defs["archives"])    # Submit to Moss
 
     if "-x" in args:
-        print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(repo_name)
+        print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(defs["repo"])
         confirm = (raw_input("Are you sure? [y/n]: ")[0].lower() == 'y')
         if confirm:
             m.del_local_repos(defs["repo"])     # remove local repos
