@@ -10,22 +10,22 @@ import utils.moss
 # flags:  
 def help():  
     return """---------------------------------------------------------------------------------------
-    This is a list of flags for the command-line:
-
-    -D: print defaults
-    -o <organization_name>: set organization name           ([o]rg set)
-    -r <repo_name>: set repo for script                     ([r]epo set)
-    -t: set teams for the organization locally              ([t]eams set)
-    -a <team_name> <member>: Add <member> to <team>         ([a]dd member)
-    -d <team_name> <member>: delete <member> from <team>    ([d]emove member)
-    -s: distribute base repo (-r <repo>) to teams on GitHub ([s]et repos)
-    -n: notify students of repo distribution                ([n]otify)
-    -g: collect repos (-r <base_repo>) from students        ([g]et repos)
-    -A: <archive_folder>: set archive directory             ([a]rchive set)
-    -m: mark repos
-    -c: compare repos using MOSS
-    -x: clear local repos (-r <assignment>)
-    -X: clear teams & repos on GitHub
+|   This is a list of flags for the command-line:
+|
+|   -D: print defaults
+|   -o <organization_name>: set organization name           ([o]rg set)
+|   -r <repo_name>: set repo for script                     ([r]epo set)
+|   -A: <archive_folder>: set archive directory             ([a]rchive set)
+|   -t: set teams for the organization locally              ([t]eams set)
+|   -a <team_name> <member>: Add <member> to <team>         ([a]dd member)
+|   -d <team_name> <member>: delete <member> from <team>    ([d]emove member)
+|   -s: distribute base repo (-r <repo>) to teams on GitHub ([s]et repos)
+|   -n: notify students of repo distribution                ([n]otify)
+|   -g: collect repos (-r <base_repo>) from students        ([g]et repos)
+|   -m: mark repos
+|   -c: compare repos using MOSS
+|   -x: clear local repos (-r <assignment>)
+|   -X: clear teams & repos on GitHub
 ---------------------------------------------------------------------------------------
     """
 
@@ -55,10 +55,13 @@ def update(defs):
         return
 
 def pretty(defs):
-    p = ""
+    p = "---------------------------------------------------------------------------------------\n"
+    p += "| Current Values Used by the Classroom Manager\n"
+    p += "|\n"
     for k, v in defs.items():
-        p += "{}: {}\n".format(k, v)
-    return p.strip()
+        p += "| {}: {}\n".format(k, v)
+    p += "---------------------------------------------------------------------------------------"
+    return p
 
 def parse_flag(flag, args):
     start = args.index(flag)+1
