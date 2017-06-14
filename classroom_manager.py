@@ -270,15 +270,16 @@ class Manager():
             # TODO: GET THE COMMIT & CALL THE SCRIPT TO ROLL IT BACK HERE.
             commit = self.get_repo_by_deadline(team, lab)
             print commit
-            repo = Repo(clone_path)
-            new_branch = repo.create_head("deadline", commit)
-            repo.head.reference = new_branch
-            # repo.head.reset(index=True, working_tree=True)
-
-            # repo.active_branch.commit = repo.commit(commit)
             
-            origin = repo.create_remote("deadline", self.insert_auth(url))
-            origin.pull("master")
+            subprocess.call(["rollback.sh", clone_path, commit])
+
+            # repo = Repo(clone_path)
+            # new_branch = repo.create_head("deadline", commit)
+            # repo.head.reference = new_branch
+            # repo.head.reset(index=True, working_tree=True)
+            # repo.active_branch.commit = repo.commit(commit)
+            # origin = repo.create_remote("deadline", self.insert_auth(url))
+            # origin.pull("master")
         
         base_url = "{}{}".format(self.url, lab)
         base_path = "./submissions/{}/base/".format(lab)
@@ -426,12 +427,15 @@ class Manager():
     def get_repo_by_deadline(self, team, lab):
         deadline = time.strptime(self.get_deadline(lab), "%Y-%m-%d %H:%M:%S")
         commits = self.get_commits(team, lab)
-        commit = commits[0]
-        print commits
+        commit = commits[-1]
+        max_date = time.strptime(str(commit.commit.author.date), "%Y-%m-%d %H:%M:%S")
         for c in commits[1:]:
             date = time.strptime(str(c.commit.author.date), "%Y-%m-%d %H:%M:%S")
-            if date <= deadline:
+            if date <= deadline and date > max_date:
+                print date
+                print deadline
                 commit = c
+                max_date = time.strptime(str(commit.commit.author.date), "%Y-%m-%d %H:%M:%S")
             else:
                 pass
 
