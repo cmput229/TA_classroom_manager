@@ -267,19 +267,10 @@ class Manager():
             if os.path.exists(clone_path):
                 shutil.rmtree(clone_path)
             Repo.clone_from(self.insert_auth(url), clone_path)
-            # TODO: GET THE COMMIT & CALL THE SCRIPT TO ROLL IT BACK HERE.
             commit = self.get_repo_by_deadline(team, lab)
             print commit
             
             subprocess.call(["rollback.sh", clone_path, commit])
-
-            # repo = Repo(clone_path)
-            # new_branch = repo.create_head("deadline", commit)
-            # repo.head.reference = new_branch
-            # repo.head.reset(index=True, working_tree=True)
-            # repo.active_branch.commit = repo.commit(commit)
-            # origin = repo.create_remote("deadline", self.insert_auth(url))
-            # origin.pull("master")
         
         base_url = "{}{}".format(self.url, lab)
         base_path = "./submissions/{}/base/".format(lab)

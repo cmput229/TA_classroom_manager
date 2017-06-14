@@ -3,10 +3,9 @@
 import sys
 import json
 
-
 from utils.classroom_manager import *
 import spimgrader as grader
-import moss
+import utils.moss
 
 # flags:  
 def help():  
@@ -38,21 +37,18 @@ def defaults():
         f.close()   
         return defaults
     except:
-        return None
+        return {"org": "", "repo": "", "archives": ""}
 
 # Param:
 #   field: field in defaults.json to be update.
 #   new_value: the value to overwrite where the field is.
 # Purpose:
 #   Updates the default values used for the manager to the most-recently used ones.
-def update(field, new_value):
+def update(defs):
     try:
-        f = open("./config/defaults.json", "r")
-        defaults = json.load(f)
-        f.close()
-        defaults[field] = new_value
         f = open("./config/defaults.json", "w")
-        json.dump(defaults, f)
+        json.dump(defs, f)
+        f.close()
         return
     except:
         return
@@ -70,45 +66,29 @@ def parse_flag(flag, args):
         return args[start:end]
 
 def main():
-    org_name = ""
-    repo_name = ""
-    arch_name = ""
+    defs = defaults()
     args = sys.argv
 
     if "-h" in args:
         print help()
         return
 
+    # SETUP
+    #----------------------------------------------------------------------------------
     if "-o" in args:
-        org_name = parse_flag("-o", args)
-    elif defaults():
-        try:
-            org_name = defaults()["org"]
-        except:
-            print "Error with org name"
-            return 1
+        defs["org"] = parse_flag("-o", args)[0]
 
     if "-r" in args:
-        repo_name = parse_flag("r", args)    # Set lab name
-        update("repo", repo_name)
-    elif defaults():
-        try:
-            repo_name = defaults()["repo"]
-        except:
-            print "Error with repo name."
-            return 1
+        defs["repo"] = parse_flag("-r", args)[0]
 
     if "-A" in args:
-        arch_name = parse_flag("-A", args)[0]
-        update("archives", arch_name)
-    elif defaults():
-        try:
-            arch_name = defaults()["archives"]
-        except:
-            print "Error with archive name."
-            return 1
+        defs["archives"] = parse_flag("-A", args)[0]
+    
+    update(defs)
 
-    m = Manager(org_name)
+    # WORK
+    #----------------------------------------------------------------------------------
+    m = Manager(defs["org"])
 
     if "-t" in args:
         m.set_teams()                           # local
@@ -128,26 +108,26 @@ def main():
         m.del_members(team, members)            # delete
     
     if "-s" in args:
-        m.set_repos(repo_name)                  # Set github repos
+        m.set_repos(defs["repo"])               # Set github repos
     
     if "-n" in args:
-        m.notify_all(repo_name)                 # Notification for repo distribution
+        m.notify_all(defs["repo"])              # Notification for repo distribution
         return
 
     if "-g" in args:
-        m.get_repos(repo_name)                  # get github repos
+        m.get_repos(defs["repo"])               # get github repos
 
     if "-m" in args:
-        grader.main(repo_name)
+        grader.main(defs["repo"])
 
     if "-c" in args:
-        moss.submit(repo_name, archives=arch_name)
+        moss.submit(defs["repo"], defs["archives"])
 
     if "-x" in args:
         print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(repo_name)
         confirm = (raw_input("Are you sure? [y/n]: ")[0].lower() == 'y')
         if confirm:
-            m.del_local_repos(repo_name)        # remove local repos
+            m.del_local_repos(defs["repo"])     # remove local repos
 
     if "-X" in args:
         print "THIS WILL CLEAR ALL TEAM REPOS & TEAMS FROM GitHub."
