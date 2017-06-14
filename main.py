@@ -9,9 +9,10 @@ import utils.moss
 
 # flags:  
 def help():  
-    return """--------------------------------------------------------------------
-    This is a list of flags on the command-line:
+    return """---------------------------------------------------------------------------------------
+    This is a list of flags for the command-line:
 
+    -D: print defaults
     -o <organization_name>: set organization name           ([o]rg set)
     -r <repo_name>: set repo for script                     ([r]epo set)
     -t: set teams for the organization locally              ([t]eams set)
@@ -25,7 +26,7 @@ def help():
     -c: compare repos using MOSS
     -x: clear local repos (-r <assignment>)
     -X: clear teams & repos on GitHub
-    --------------------------------------------------------------------
+---------------------------------------------------------------------------------------
     """
 
 # Purpose:
@@ -53,6 +54,12 @@ def update(defs):
     except:
         return
 
+def pretty(defs):
+    p = ""
+    for k, v in defs.items():
+        p += "{}: {}\n".format(k, v)
+    return p.strip()
+
 def parse_flag(flag, args):
     start = args.index(flag)+1
     end = start
@@ -72,6 +79,9 @@ def main():
     if "-h" in args:
         print help()
         return
+
+    if "-D" in args:
+        print pretty(defs)
 
     # SETUP
     #----------------------------------------------------------------------------------
