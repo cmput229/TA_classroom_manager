@@ -1,20 +1,32 @@
 #!/usr/bin/env python
 
-import sys
 import os
 import shutil
-import json
 import subprocess
 
-# Expects base code to be in ./<lab>/instructor/base/
-# Want to handle more than just *.s; just concat. all *.* in /base/
-def getBase(lab, suffix = "s"):
+# Params:
+#   lab: string identifier for lab
+# Purpose:
+#   Expects base code to be in ./submissions/<lab>/base/submission/
+#   Gathers a list of all base code files for a given lab.
+#   Appends a flag for moss to the front of the file name
+# Returns:
+#   A list of flags to be passed into Moss to identify base code files.
+def getBase(lab):
     base_dir = "./submissions/{}/base/submission/".format(lab)
     base_files = os.listdir("./submissions/{}/base/submission/".format(lab))
     base_files.sort()
     base_flags = ["-b {}{}".format(base_dir, f) for f in base_files]
     return base_flags
 
+# Params:
+#   archives: string identifier for archive folder
+# Purpose:
+#   Expects archives to be within ./submissions/<archives>/
+#   Gathers a list of all files within the archives folder
+#   Generates a list of these files to pass in to MOSS
+# Returns:
+#   A list of files to be passed to MOSS
 def getArchives(archives):
     if archives == "":
         return ""
@@ -28,6 +40,11 @@ def getArchives(archives):
     a = ["./submissions/{}/\"{}\"".format(archives, filename) for filename in a]
     return a    
 
+# Params:
+#   lab: string identifier for the lab
+# Purpose:
+#   Expects submissions to be in ./submissions/<lab>/<team>/submission/
+#   To gather all the student submissions to pass in to MOSS.
 def getSubmissions(lab):
     submissions = os.listdir("./submissions/{}/".format(lab))
     submissions.remove("base")
@@ -52,7 +69,7 @@ def submit(lab, lang="mips", suffix="s", archives=""):
     print "This may take quite a long time."
 
     lab_dir = "./submissions/{}/".format(lab)    
-    base_flags = getBase(lab, suffix)
+    base_flags = getBase(lab)
     archives = getArchives(archives)
     submissions = getSubmissions(lab)
 

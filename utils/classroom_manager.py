@@ -357,7 +357,8 @@ class Manager():
         base_repo = Repo.clone_from(self.insert_auth(url), "./base/")
         return base_repo, url
 
-    # Removes the local copy of the repo after distribution 
+    # Purpose:
+    #   Removes the local copy of the repo after distribution 
     def remove_local(self):
         shutil.rmtree("./base/")
 
@@ -374,23 +375,40 @@ class Manager():
         url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
         return url
 
+    # Purpose:
+    #   To read the repos assigned to teams from file.
     def load_repos(self):
         f = open("./config/repos.json", "r")
         repos = json.load(f)
         f.close()
         return repos
 
+    # Purpose:
+    #   To save the repose assigned to teams to file.
     def write_repos(self, urls):
         f = open("./config/repos.json", "w")
         repos = json.dump(urls, f)
         f.close()
 
+    # Params:
+    #   team: string identifier for the team
+    #   lab: string identifier for the lab
+    # Purpose:
+    #   Gather all commits made to a repo by the team.
+    # Returns:
+    #   A list of PyGitHub commit objects
     def get_commits(self, team, lab):
         name = "{}_{}".format(team, lab)
         repo = self.org.get_repo(name)
         commits = [c for c in repo.get_commits()]
         return commits
 
+    # Params:
+    #   lab: string identifier for the lab
+    # Purpose:
+    #   To read the deadline for a given lab from file.
+    # Returns:
+    #   String Date in the format %Y-%m-%d %H:%M:%S
     def get_deadline(self, lab):
         deadlines_file = open("./config/deadlines.csv", "r")
         d = deadlines_file.readlines()
@@ -405,6 +423,13 @@ class Manager():
             deadlines[l] = date
         return deadlines[lab].strip()
 
+    # Params:
+    #   team: string identifier for a team
+    #   lab: string identifier for a lab
+    # Purpose:
+    #   To identify which commit is the closest to the deadline without overstepping it.
+    # Returns:
+    #   unique id for the commit pre/at the deadline.
     def get_repo_by_deadline(self, team, lab):
         # TODO: GitHub timestamps are at a different time than local.  Ensure that the math
         #       to get correct timestamp is correct.
@@ -426,21 +451,5 @@ class Manager():
                 pass
 
         return commit.commit.sha
-
-    # After pulling:
-    #   repos are in "./submissions/<lab>/<team>/
-    # Grader expects them in:
-    #   ./marker/<lab>/<team>
-    def migrate_files(self, lab):
-        teams = os.listdir("./submissions/{}/".format(lab))
-        for team in teams:
-            source = "./submissions/{}/{}/".format(lab, team)
-            dest = "./marker/{}/{}/".format(lab, team)
-            if os.path.isdir(dest):
-                shutil.rmtree(dest)
-            shutil.copytree(source, dest)
-
-    def set_archives(archives):
-        self.archives = archives
 
 

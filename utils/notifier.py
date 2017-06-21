@@ -1,5 +1,9 @@
+
+# REFERENCE:
+#----------------------------------------------------------------------------------------------
 # http://www.pythonforbeginners.com/code-snippets-source-code/using-python-to-send-email/
 # https://docs.python.org/3/library/email-examples.html
+#----------------------------------------------------------------------------------------------
 
 # Import smtplib for the actual sending function
 import smtplib
@@ -7,6 +11,13 @@ import smtplib
 # Import the email modules we'll need
 from email.mime.text import MIMEText
 
+# Params:
+#   recipient: string email address of the recipient
+#   team: string id for the team
+#   lab: string id for the lab
+#   url: string of the repo's url
+# Purpose:
+#   Send an email notification that the repo has been assigned. 
 def send_notification(recipient, team, lab, url):
     msg = "This is a notification:\n"
     msg += "Your team, {}, has been assigned a repo for {}.\n".format(team, lab)
