@@ -171,7 +171,7 @@ def write_summary(lab):
 def input_blob(test, subm, resl, diag):
     pass
 
-def test_paths():
+def test_paths(lab):
     # No use in running if content directories aren't present.
     subm = "./submissions/{}".format(lab)
     test = "./marker/test_cases"
@@ -196,7 +196,7 @@ def test_paths():
 # Expectation: Outputs per team will be ./marker/outputs/team/Lab<n>
 # Expectation: Results per team will be ./marker/results/team/Lab<n>
 def main(lab, input_type="line"):
-    test_paths()
+    test_paths(lab)
 
     print "Marking student repos."
     if input_type == "line":
