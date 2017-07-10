@@ -171,13 +171,7 @@ def write_summary(lab):
 def input_blob(test, subm, resl, diag):
     pass
 
-# Expectation: Submission files will be  ./submissions/submission/lab<n>/<team>/
-# Expectation: All test case files for lab<n> will be ./marker/test_cases/lab<n>
-# Expectation: Ditto expectations file.
-# Expectation: Outputs per team will be ./marker/outputs/team/Lab<n>
-# Expectation: Results per team will be ./marker/results/team/Lab<n>
-def main(lab, input_type="line"):
-    print "Marking student repos."
+def test_paths():
     # No use in running if content directories aren't present.
     subm = "./submissions/{}".format(lab)
     test = "./marker/test_cases"
@@ -194,14 +188,23 @@ def main(lab, input_type="line"):
     if not os.path.isdir(resl):
         os.mkdir(resl)
     if not os.path.isdir(summ):
-        os.mkdir(summ)
+        os.mkdir(summ) 
 
+# Expectation: Submission files will be  ./submissions/submission/lab<n>/<team>/
+# Expectation: All test case files for lab<n> will be ./marker/test_cases/lab<n>
+# Expectation: Ditto expectations file.
+# Expectation: Outputs per team will be ./marker/outputs/team/Lab<n>
+# Expectation: Results per team will be ./marker/results/team/Lab<n>
+def main(lab, input_type="line"):
+    test_paths()
+
+    print "Marking student repos."
     if input_type == "line":
         input_lines(lab)
     else:
         input_blob(lab)
-
     write_summary(lab)
+
     print "View a summary in ./marker/summary/{}.csv".format(lab)
 
        
