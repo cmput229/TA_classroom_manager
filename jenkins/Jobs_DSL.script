@@ -1,39 +1,53 @@
-job("JOBNAME") {
-  scm {
-    git {
-      remote {
-        github('REMOTE_URL')
-        branch('master')
-        credentials('CREDENTIALS_ID')
-      }
-      configure { node ->
-        node / "extensions" << "hudson.plugins.git.extensions.impl.MessageExclusion" {
-          excludedMessage "(?s)^Jenkins.*"
-          wipeOutWorkspace
-        }
-      }
-    }
-  }
-  triggers {
-    githubPush()
-  }
-  steps {
-    shell("git checkout master")
-    shell("python hello.py >> tmp")
-    shell("git add .")
-    shell("git commit -m 'Jenkins CI Response'")
-  }
-  configure { node ->
-    node / "publishers" << "hudson.plugins.git.GitPublisher" {
-      configVersion "2"
-      pushMerge "True"
-      forcePush "True"
-      branchesToPush {
-      	"hudson.plugins.git.GitPublisher_-BranchToPush" {
-      	  targetRepoName "origin"
-      	  branchName "master"
-        }
-      } 
-    }
-  }
+String c = '41fa261c-da80-4158-9f7f-310460627d64'
+
+String hub = "https://github.com/"
+String org = "GitHubClassroomTestCMPUT229/"
+
+def repos = [
+	"Jenkins_Test_III",
+	"Jenkins_Test_II",
+	"Jenkins_Test"
+]
+
+repos.each {
+  	String name = it
+	job(name) {
+	  scm {
+		git {
+		  remote {
+		    github(hub + org + name + ".git")
+		    branch('master')
+		    credentials(c)
+		  }
+		  configure { node ->
+		    node / "extensions" << "hudson.plugins.git.extensions.impl.MessageExclusion" {
+		      excludedMessage "(?s)^Jenkins.*"
+		      wipeOutWorkspace
+		    }
+		  }
+		}
+	  }
+	  triggers {
+		githubPush()
+	  }
+	  steps {
+		shell("git checkout master")
+		shell("python hello.py >> tmp")
+		shell("git add .")
+		shell("git commit -m 'Jenkins CI Response'")
+	  }
+	  configure { node ->
+		node / "publishers" << "hudson.plugins.git.GitPublisher" {
+		  configVersion "2"
+		  pushMerge "True"
+		  forcePush "True"
+		  branchesToPush {
+		  	"hudson.plugins.git.GitPublisher_-BranchToPush" {
+		  	  targetRepoName "origin"
+		  	  branchName "master"
+		    }
+		  } 
+		}
+	  }
+	}
 }
