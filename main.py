@@ -19,6 +19,7 @@ def help():
 |
 |   SETUP
 |=====================================================================================
+|   -p <prefix>: set optional prefix for assignments        (set [p]refix)
 |   -S <server url>: set server url                         (set [S]erver)
 |   -o <organization_name>: set organization name           ([o]rg set)
 |   -r <repo_name>: set repo for script                     ([r]epo set)
@@ -31,6 +32,7 @@ def help():
 |=====================================================================================
 |   -s (-r <repo>): distribute base repo to teams on GitHub ([s]et repos)
 |   -g (-r <base_repo>): collect repos from students        ([g]et repos)
+|   -w (-r <repo>): set webhooks for teams working on repo  (set [w]ebhooks)
 |   -n: notify students of repo distribution                ([n]otify)
 |
 |   HOUSEKEEPING
@@ -105,6 +107,10 @@ def main():
 
     # SETUP
     #----------------------------------------------------------------------------------
+    if "-p" in args:
+        print "Updating prefix."
+        defs["prefix"] = parse_flag("-p", args)[0]
+
     if "-o" in args:
         print "Updating organization."
         defs["org"] = parse_flag("-o", args)[0]
@@ -146,6 +152,9 @@ def main():
     
     if "-s" in args:
         m.set_repos(defs["repo"])               # Set github repos
+
+    if "-w" in args:
+        m.set_hooks(defs["repo"])            # Set webhooks to distributed repos
     
     if "-n" in args:
         m.notify_all(defs["repo"])              # Notification for repo distribution
