@@ -26,6 +26,63 @@ from notifier import send_notification as notify
 # User: lbrownell-gpsw
 #----------------------------------------------------------------------------------------------
 
+# STRUCTURE OF THE MANAGER
+#----------------------------
+#   - init()
+#   - set_members()
+#
+#   TEAM METHODS
+#   -------------------------
+#   - set_teams
+#   - set_git_teams
+#   - get_git_teams
+#   - del_git_teams
+#   - add_members
+#   - del_members
+#
+#   DISTRIBUTION METHODS
+#   -------------------------
+#   - set_base
+#   - remote_clone
+#   - local_clone
+#   - assign_repos
+#   - set_repos
+#   - get_repos
+#   - del_local_repos
+#   - del_git_repos
+#
+#   WEBHOOK METHODS
+#   -------------------------
+#   - clean_hooks
+#   - make_hook
+#   - set_hooks
+#
+#   JENKINS METHODS
+#   -------------------------
+#   - make_jobs_DSL
+#
+#   NOTIFICATION METHODS
+#   -------------------------
+#   - notify_all
+#
+#   COLLECTION METHODS
+#   -------------------------
+#   - get_commits
+#   - get_deadline
+#   - get_repo_by_deadline
+#
+#   HOUSEKEEPING METHODS
+#   -------------------------
+#   - gen_repo_name
+#   - get_server
+#   - get_token
+#   - json_to_csv
+#   - git_to_csv
+#   - remove_local
+#   - insert_auth
+#   - load_repos
+#   - write_repos
+
 class Manager():
     def __init__(self, name):
         self.name = name
@@ -34,42 +91,6 @@ class Manager():
         self.hub = Github(token)        
         self.org = self.hub.get_organization(name)
 
-    # Purpose:
-    #   Generate a repo name given a team name and a lab/assignment name
-    #   to reduce floating magic strings
-    def gen_name(self, lab, team):
-        f = open("./config/defaults.json", "r")
-        defaults = json.load(f)
-        f.close()
-        if "prefix" in defaults and defaults["prefix"] != "":
-            return "{}_{}_{}".format(defaults["prefix"], team, lab)
-        else:
-            return "{}_{}".format(team, lab)
-
-    def get_server(self):
-        f = open("./config/defaults.json", "r")
-        defaults = json.load(f)
-        f.close()
-        return defaults["server"]
-
-    # Purpose:
-    #   Reads git.token to get the oauth token that allows PyGithub and GitPython 
-    #   to perform their actions.
-    def get_token(self):
-        f = open("git.token", "r")
-        token = f.readline().strip()
-        return token
-
-    # Params:
-    #   hub: PyGitHub github object
-    #   name: the name of the organization being retrieved
-    # Purpose:
-    #   Get access to the PyGitHub abstraction of the classroom
-    # Returns:
-    #   An instance of PyGitHub abstraction of the GitHub service
-    def get_org(self):
-        return self.hub.get_organization(self.name)
-
     # Params:
     #   hub: PyGitHub github object
     #   org: PyGitHub organization object
@@ -77,6 +98,7 @@ class Manager():
     #   To iterate over all the GitHub IDs in a class.txt file
     #   and add the GitHub users to the organization's membership.
     # N.B.: class.txt is a text file with student gitIDs on each line
+    # TODO: REMOVE THIS?  NOT USED.  ASSUME STUDENTS MUST JOIN ORGANIZATION?
     def set_members(self):
         class_list = open("./config/class.txt", "r")
         c = [line.strip() for line in c]
@@ -84,6 +106,9 @@ class Manager():
 
         for student in c:
             self.org.add_to_public_members(self.hub.get_user(student))
+
+    # TEAM METHODS
+    #----------------------------------------------------------------------------------
 
     # Default: Each student in the class is in their own team
     # Nondefault:   If students are allowed to form groups, then their groups should
@@ -124,32 +149,6 @@ class Manager():
         json.dump(teams, out)
         out.close()
 
-    # Purpose:
-    #   Write the team defs as csv
-    #   Format: <team>,<member>\n
-    def json_to_csv(self):
-        f = open("./config/team_defs.json", "r")
-        teams = json.load(f)
-        f.close()
-
-        out = open("./config/team_defs.csv", "w")
-        for team in teams:
-            for member in teams[team]:
-                out.write("{},{}\n".format(team,member))
-        out.close()
-
-    # Purpose:
-    #   Write the team defs as csv
-    #   Format: <team>,<member>\n
-    def git_to_csv(self):
-        out = open("./config/team_defs.csv", "w")
-        teams = self.get_git_teams()
-        for team in teams:
-            members = [m for m in team.get_members()]
-            for member in members:
-                out.write("{},{}\n".format(team.name,member.login))
-        out.close()
-
     # Params:
     #   hub: PyGitHub github object
     #   org: PyGitHub organization object
@@ -180,6 +179,19 @@ class Manager():
         return results
 
     # Param:
+    #   org: PyGitHub organization object
+    # Iterates over all teams in the organization & deletes them.
+    def del_git_teams(self):
+        teams = self.org.get_teams()
+        for team in teams:
+            if team.name != "Students":
+                members = team.get_members()
+                for member in members:
+                    team.remove_from_members(member)
+                print "Deleting team " + team.name
+                team.delete()
+
+    # Param:
     #   team: name of a team on GitHub
     #   member: name of a member of the organization
     # Purpose:
@@ -207,6 +219,8 @@ class Manager():
         if members == []:
             team.delete()
 
+    # DISTRIBUTION METHODS
+    #----------------------------------------------------------------------------------
     def set_base(self, lab):
         urls = self.load_repos()
         try:
@@ -222,6 +236,39 @@ class Manager():
             print e
             return False
 
+    # Params:
+    #   lab: identifier for the lab, eg "lab1".
+    #   team: PyGitHub team object.
+    #   base_repo: GitPython repo object.
+    #   org: PyGitHub organization object
+    # Purpose:
+    #   Distributes the repo to a team from a local copy of the repo.
+    # Returns:
+    #   A dictionary mapping the lab identifier to the url of the team's clone.
+    def remote_clone(self, lab, team, base_repo):
+        base_url = self.url+lab
+        repo_name = self.gen_repo_name(lab, team.name)
+        team_repo = self.org.create_repo(repo_name, team_id=team)
+
+        repo_url = self.url + repo_name
+        remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
+        remote.push()
+        return repo_url
+
+    # Param:
+    #   lab: string identifier for a lab
+    # Purpose:
+    #   Creates a local copy of the lab's base code in order to distribute it to students in the class.
+    # Return:
+    #   GitPython Repo object
+    def local_clone(self, lab):
+        token = self.get_token()
+        url = self.url+lab
+        if os.path.exists("./base/"):
+            shutil.rmtree("./base/")
+        base_repo = Repo.clone_from(self.insert_auth(url), "./base/")
+        return base_repo, url
+
     def assign_repos(self, lab, base):
         teams = self.org.get_teams()
         urls = self.load_repos()
@@ -229,7 +276,7 @@ class Manager():
             if team.name != "Students":
                 try:
                     print "Assigning " + team.name + " the repo."
-                    team_repo = self.clone(lab, team, base)
+                    team_repo = self.remote_clone(lab, team, base)
                     if team.name in urls:
                         urls[team.name][lab] = team_repo
                     else:
@@ -241,7 +288,7 @@ class Manager():
                     sleep(5)
                     try:
                         print "Assigning " + team.name + " the repo."
-                        team_repo = self.clone(lab, team, base) 
+                        team_repo = self.remote_clone(lab, team, base) 
                         if team.name in urls:
                             urls[team.name][lab] = team_repo
                         else:
@@ -251,33 +298,7 @@ class Manager():
                         print e
                         return False
         self.write_repos(urls)
-        return True
-
-    def set_config(self):
-        return  {"url": "https://" + self.get_server() + "/github-webhook/"}
-
-    def clean_hooks(self, repo):
-        hooks = repo.get_hooks()
-        for hook in hooks:
-            if self.get_server() in hook.config["url"]:
-                hook.delete()
-
-    def make_hook(self, repo):
-        name = "web"
-        config = self.set_config()
-        events = ["push"]
-        active = True
-        hook = repo.create_hook(name, config, events, active)        
-                
-    def set_hooks(self, lab):
-        urls = self.load_repos()
-        if "base" in urls:
-            del urls["base"]
-        for team,repos in urls.items():
-            if lab in repos:
-                repo = self.org.get_repo(self.gen_name(lab, team))
-                self.clean_hooks(repo)
-                self.make_hook(repo)
+        return True 
 
     # Param:
     #   org: PyGitHub organization object
@@ -291,16 +312,12 @@ class Manager():
         base = self.set_base(lab)
         if (base):
             if (self.assign_repos(lab, base)):
-                if (self.set_hooks(lab)):
-                    print "Base code, repos, and webhooks assigned and set."
-                else:
-                    print "Error setting webhooks."
+                pass
             else:
                 print "Error assigning repos."
             shutil.rmtree("./base/")
         else:
             print "Error assigning base code."
-
 
     # Param:
     #   lab: String
@@ -333,26 +350,6 @@ class Manager():
         Repo.clone_from(self.insert_auth(base_url), base_path)
 
     # Param:
-    #   lab: String lab
-    # Purpose:
-    #   to iterate over all students by team in order to notify them
-    #   that the lab has been assigned.
-    def notify_all(self, lab):
-        teams = self.org.get_teams()
-        urls = self.load_repos()
-
-        for team in teams:
-            if team.name != "Students":
-                for member in team.get_members():
-                    contact = member.email
-                    if contact != None:
-                        print "{} is notified that {} is distributed.".format(member.login, lab)
-                        url = urls[team.name][lab]
-                        notify(contact, team.name, lab, url)
-                    else:
-                        print "{} does not have their public email set.".format(member.login)
-
-    # Param:
     #   Lab: Which lab/assignment will be deleted
     # Purpose:
     #   Deletes local files for lab
@@ -375,84 +372,93 @@ class Manager():
                 print "Deleting repo " + repo.name
                 repo.delete()
 
+
+    # WEBHOOKS METHODS
+    #----------------------------------------------------------------------------------
+    def clean_hooks(self, repo):
+        hooks = repo.get_hooks()
+        for hook in hooks:
+            if self.get_server()+"/github-webhook/" in hook.config["url"]:
+                hook.delete()
+
+    def make_hook(self, repo):
+        name = "web"
+        config = {"url": "https://" + self.get_server() + "/github-webhook/"}
+        events = ["push"]
+        active = True
+        hook = repo.create_hook(name, config, events, active)        
+                
+    def set_hooks(self, lab):
+        urls = self.load_repos()
+        if "base" in urls:
+            del urls["base"]
+        for team,repos in urls.items():
+            if lab in repos:
+                repo = self.org.get_repo(self.gen_repo_name(lab, team))
+                self.clean_hooks(repo)
+                self.make_hook(repo)
+
+    # JENKINS METHODS
+    #----------------------------------------------------------------------------------
+    def write_jobs_repos(self, lab):
+        teams = [t.name for t in self.org.get_teams()]
+        teams.remove("Students")
+
+        repos = []
+        for team in teams:
+            repos.append(self.gen_repo_name(lab, team))
+
+        out = "def repos = [\n"
+        for r in repos:
+            out += "\t\"" + r + "\",\n"
+        out = out[:-2]
+        out += "\n]\n"
+        
+        f = open("./jenkins/components/j_repos.groovy", "w")
+        f.write(out)
+        f.close()
+
+        
+
+    def make_jobs_DSL(self, lab):
+        out = ""
+        files = ["./jenkins/components/j_config.groovy", 
+                 "./jenkins/components/j_repos.groovy", 
+                 "./jenkins/components/j_skeleton.groovy"]
+        for f in files:
+            f = open(f, "r")
+            out += f.read() + "\n"
+            f.close()
+        f = open("./jenkins/jobs.groovy", "w")
+        f.write(out)
+        f.close()
+
+
+    # NOTIFICATION METHODS
+    #----------------------------------------------------------------------------------
+
     # Param:
-    #   org: PyGitHub organization object
-    # Iterates over all teams in the organization & deletes them.
-    def del_git_teams(self):
+    #   lab: String lab
+    # Purpose:
+    #   to iterate over all students by team in order to notify them
+    #   that the lab has been assigned.
+    def notify_all(self, lab):
         teams = self.org.get_teams()
+        urls = self.load_repos()
+
         for team in teams:
             if team.name != "Students":
-                members = team.get_members()
-                for member in members:
-                    team.remove_from_members(member)
-                print "Deleting team " + team.name
-                team.delete()
+                for member in team.get_members():
+                    contact = member.email
+                    if contact != None:
+                        print "{} is notified that {} is distributed.".format(member.login, lab)
+                        url = urls[team.name][lab]
+                        notify(contact, team.name, lab, url)
+                    else:
+                        print "{} does not have their public email set.".format(member.login)
 
-    # Params:
-    #   lab: identifier for the lab, eg "lab1".
-    #   team: PyGitHub team object.
-    #   base_repo: GitPython repo object.
-    #   org: PyGitHub organization object
-    # Purpose:
-    #   Distributes the repo to a team from a local copy of the repo.
-    # Returns:
-    #   A dictionary mapping the lab identifier to the url of the team's clone.
-    def clone(self, lab, team, base_repo):
-        base_url = self.url+lab
-        repo_name = "{}_{}".format(team.name, lab)
-        repo_url = self.url + repo_name
-        team_repo = self.org.create_repo(repo_name, team_id=team)
-        remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
-        remote.push()  
-        return repo_url
-
-    # Param:
-    #   lab: string identifier for a lab
-    # Purpose:
-    #   Creates a local copy of the lab's base code in order to distribute it to students in the class.
-    # Return:
-    #   GitPython Repo object
-    def local_clone(self, lab):
-        token = self.get_token()
-        url = self.url+lab
-        if os.path.exists("./base/"):
-            shutil.rmtree("./base/")
-        base_repo = Repo.clone_from(self.insert_auth(url), "./base/")
-        return base_repo, url
-
-    # Purpose:
-    #   Removes the local copy of the repo after distribution 
-    def remove_local(self):
-        shutil.rmtree("./base/")
-
-    # Param:
-    #   url: string representation of a GitHub resource.
-    # Purpose:
-    #   Inserts an oauth token in the url to make access easier, and to keep from committing 
-    #   oauth tokens to git repos.  It lets the url remain unaltered at the higher scope.
-    #   Needed for access using GitPython (different interface from PyGitHub).
-    # Returns:
-    #   The url, but with oauth token inserted
-    def insert_auth(self, url):
-        token = self.get_token()
-        url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
-        return url
-
-    # Purpose:
-    #   To read the repos assigned to teams from file.
-    def load_repos(self):
-        f = open("./config/repos.json", "r")
-        repos = json.load(f)
-        f.close()
-        return repos
-
-    # Purpose:
-    #   To save the repose assigned to teams to file.
-    def write_repos(self, urls):
-        f = open("./config/repos.json", "w")
-        repos = json.dump(urls, f)
-        f.close()
-
+    # COLLECTION METHODS
+    #----------------------------------------------------------------------------------
     # Params:
     #   team: string identifier for the team
     #   lab: string identifier for the lab
@@ -514,4 +520,94 @@ class Manager():
                 pass
 
         return commit.commit.sha
+
+    # HOUSEKEEPING METHODS
+    #----------------------------------------------------------------------------------
+
+    # Purpose:
+    #   Generate a repo name given a team name and a lab/assignment name
+    #   to reduce floating magic strings
+    def gen_repo_name(self, lab, team):
+        f = open("./config/defaults.json", "r")
+        defaults = json.load(f)
+        f.close()
+        if "prefix" in defaults and defaults["prefix"] != "":
+            return "{}_{}_{}".format(defaults["prefix"], team, lab)
+        else:
+            return "{}_{}".format(team, lab)
+
+    def get_server(self):
+        f = open("./config/defaults.json", "r")
+        defaults = json.load(f)
+        f.close()
+        return defaults["server"]
+
+    # Purpose:
+    #   Reads git.token to get the oauth token that allows PyGithub and GitPython 
+    #   to perform their actions.
+    def get_token(self):
+        f = open("git.token", "r")
+        token = f.readline().strip()
+        return token
+
+    # Purpose:
+    #   Write the team defs as csv
+    #   Format: <team>,<member>\n
+    def json_to_csv(self):
+        f = open("./config/team_defs.json", "r")
+        teams = json.load(f)
+        f.close()
+
+        out = open("./config/team_defs.csv", "w")
+        for team in teams:
+            for member in teams[team]:
+                out.write("{},{}\n".format(team,member))
+        out.close()
+
+    # Purpose:
+    #   Write the team defs as csv
+    #   Format: <team>,<member>\n
+    def git_to_csv(self):
+        out = open("./config/team_defs.csv", "w")
+        teams = self.get_git_teams()
+        for team in teams:
+            members = [m for m in team.get_members()]
+            for member in members:
+                out.write("{},{}\n".format(team.name,member.login))
+        out.close()
+
+    # Purpose:
+    #   Removes the local copy of the repo after distribution 
+    def remove_local(self):
+        shutil.rmtree("./base/")
+
+    # Param:
+    #   url: string representation of a GitHub resource.
+    # Purpose:
+    #   Inserts an oauth token in the url to make access easier, and to keep from committing 
+    #   oauth tokens to git repos.  It lets the url remain unaltered at the higher scope.
+    #   Needed for access using GitPython (different interface from PyGitHub).
+    # Returns:
+    #   The url, but with oauth token inserted
+    def insert_auth(self, url):
+        token = self.get_token()
+        url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
+        return url
+
+    # Purpose:
+    #   To read the repos assigned to teams from file.
+    def load_repos(self):
+        f = open("./config/repos.json", "r")
+        repos = json.load(f)
+        f.close()
+        return repos
+
+    # Purpose:
+    #   To save the repos assigned to teams to file.
+    def write_repos(self, urls):
+        f = open("./config/repos.json", "w")
+        repos = json.dump(urls, f)
+        f.close()
+
+
 

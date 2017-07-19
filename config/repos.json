@@ -1,5 +1,1 @@
-{
-    "base": {"Lab_Template": "https://github.com/GitHubClassroomTestCMPUT229/Lab_Template"},
-    "team0": {"Lab_Template": "https://github.com/GitHubClassroomTestCMPUT229/team0_Lab_Template"}, 
-    "team1": {"Lab_Template": "https://github.com/GitHubClassroomTestCMPUT229/team1_Lab_Template"}
-}
+{"base": {"Lab_Template": "https://github.com/GitHubClassroomTestCMPUT229/Lab_Template"}, "team0": {"Lab_Template": "https://github.com/GitHubClassroomTestCMPUT229/SUMMER_17_team0_Lab_Template"}, "team1": {"Lab_Template": "https://github.com/GitHubClassroomTestCMPUT229/SUMMER_17_team1_Lab_Template"}}

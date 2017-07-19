@@ -1,11 +1,3 @@
-String c = '41fa261c-da80-4158-9f7f-310460627d64'
-String org = "GitHubClassroomTestCMPUT229/"
-
-def repos = [
-	"team0_Lab_Template",
-	"team1_Lab_Template"
-]
-
 repos.each {
   String name = it
   job(name) {
