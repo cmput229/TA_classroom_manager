@@ -155,15 +155,11 @@ def main():
         m.set_repos(defs["repo"])               # Set github repos
 
     if "-w" in args:
-<<<<<<< HEAD
         m.set_hooks(defs["repo"])               # Set webhooks to distributed repos
     
     if "-j" in args:
         m.write_jobs_repos("Lab_Template")      # Set the repos component of .groovy DSL
         m.make_jobs_DSL("Lab_Template")         # Concatenate components of DSL into valid file
-=======
-        m.set_hooks(defs["repo"])            # Set webhooks to distributed repos
->>>>>>> c03a959b476282926d9bca6b6834170dab6092a1
     
     if "-n" in args:
         m.notify_all(defs["repo"])              # Notification for repo distribution
