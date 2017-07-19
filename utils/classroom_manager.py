@@ -57,10 +57,13 @@ from notifier import send_notification as notify
 #   - make_hook
 #   - set_hooks
 #
+<<<<<<< HEAD
 #   JENKINS METHODS
 #   -------------------------
 #   - make_jobs_DSL
 #
+=======
+>>>>>>> c03a959b476282926d9bca6b6834170dab6092a1
 #   NOTIFICATION METHODS
 #   -------------------------
 #   - notify_all
@@ -398,6 +401,7 @@ class Manager():
                 self.clean_hooks(repo)
                 self.make_hook(repo)
 
+<<<<<<< HEAD
     # JENKINS METHODS
     #----------------------------------------------------------------------------------
     def write_jobs_repos(self, lab):
@@ -457,6 +461,31 @@ class Manager():
                     else:
                         print "{} does not have their public email set.".format(member.login)
 
+=======
+    # NOTIFICATION METHODS
+    #----------------------------------------------------------------------------------
+
+    # Param:
+    #   lab: String lab
+    # Purpose:
+    #   to iterate over all students by team in order to notify them
+    #   that the lab has been assigned.
+    def notify_all(self, lab):
+        teams = self.org.get_teams()
+        urls = self.load_repos()
+
+        for team in teams:
+            if team.name != "Students":
+                for member in team.get_members():
+                    contact = member.email
+                    if contact != None:
+                        print "{} is notified that {} is distributed.".format(member.login, lab)
+                        url = urls[team.name][lab]
+                        notify(contact, team.name, lab, url)
+                    else:
+                        print "{} does not have their public email set.".format(member.login)
+
+>>>>>>> c03a959b476282926d9bca6b6834170dab6092a1
     # COLLECTION METHODS
     #----------------------------------------------------------------------------------
     # Params:
