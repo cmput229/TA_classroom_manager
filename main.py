@@ -12,20 +12,34 @@ def help():
     return """---------------------------------------------------------------------------------------
 |   This is a list of flags for the command-line:
 |
+|   INFO
+|=====================================================================================
+|   -h: print help                                          ([h]elp)
 |   -D: print defaults                                      ([D]efaults)
+|
+|   SETUP
+|=====================================================================================
+|   -S <server url>: set server url                         (set [S]erver)
 |   -o <organization_name>: set organization name           ([o]rg set)
 |   -r <repo_name>: set repo for script                     ([r]epo set)
-|   -A: <archive_folder>: set archive directory             ([a]rchive set)
+|   -A <archive_folder>: set archive directory              ([a]rchive set)
 |   -t: set teams for the organization locally              ([t]eams set)
-|   -a <team_name> <member>: Add <member> to <team>         ([a]dd member)
-|   -d <team_name> <member>: delete <member> from <team>    ([d]emove member)
-|   -s: distribute base repo (-r <repo>) to teams on GitHub ([s]et repos)
+|   -a <team> <member>: Add <member> to <team>              ([a]dd member)
+|   -d <team> <member>: delete <member> from <team>         ([d]emove member)
+|
+|   DISTRIBUTION
+|=====================================================================================
+|   -s (-r <repo>): distribute base repo to teams on GitHub ([s]et repos)
+|   -g (-r <base_repo>): collect repos from students        ([g]et repos)
 |   -n: notify students of repo distribution                ([n]otify)
-|   -g: collect repos (-r <base_repo>) from students        ([g]et repos)
+|
+|   HOUSEKEEPING
+|=====================================================================================
 |   -m: mark repos                                          ([m]ark repos)
 |   -c: compare repos using MOSS                            ([c]ompare)
-|   -x: clear local repos (-r <assignment>)
-|   -X: clear teams & repos on GitHub
+|   -x: clear local repos (-r <assignment>)                 ()
+|   -X: clear teams & repos on GitHub                       ()
+|
 ---------------------------------------------------------------------------------------
     """
 
@@ -59,7 +73,10 @@ def pretty(defs):
     p += "| Current Values Used by the Classroom Manager\n"
     p += "|\n"
     for k, v in defs.items():
-        p += "| {}: {}\n".format(k, v)
+        if k == "repo" or k == "org":
+            p += "| {}:\t\t{}\n".format(k, v)
+        else:
+            p += "| {}:\t{}\n".format(k, v)
     p += "---------------------------------------------------------------------------------------"
     return p
 
@@ -99,12 +116,19 @@ def main():
     if "-A" in args:
         print "Updating archives."
         defs["archives"] = parse_flag("-A", args)[0]
+
+    if "-S" in args:
+        print "Updating server."
+        defs["server"] = parse_flag("-S", args)[0]
     
     update(defs)
 
     # WORK
     #----------------------------------------------------------------------------------
     m = Manager(defs["org"])
+
+    m.set_hooks("Lab_Template")
+    return
 
     if "-t" in args:
         m.set_teams()                           # local

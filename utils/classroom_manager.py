@@ -6,6 +6,7 @@ from github import Github
 from git import Repo
 from datetime import datetime
 from datetime import timedelta
+from time import sleep
 import os
 import subprocess
 
@@ -32,6 +33,24 @@ class Manager():
         token = self.get_token()
         self.hub = Github(token)        
         self.org = self.hub.get_organization(name)
+
+    # Purpose:
+    #   Generate a repo name given a team name and a lab/assignment name
+    #   to reduce floating magic strings
+    def gen_name(self, lab, team):
+        f = open("./config/defaults.json", "r")
+        defaults = json.load(f)
+        f.close()
+        if "prefix" in defaults and defaults["prefix"] != "":
+            return "{}_{}_{}".format(defaults["prefix"], team, lab)
+        else:
+            return "{}_{}".format(team, lab)
+
+    def get_server(self):
+        f = open("./config/defaults.json", "r")
+        defaults = json.load(f)
+        f.close()
+        return defaults["server"]
 
     # Purpose:
     #   Reads git.token to get the oauth token that allows PyGithub and GitPython 
@@ -188,17 +207,8 @@ class Manager():
         if members == []:
             team.delete()
 
-    # Param:
-    #   org: PyGitHub organization object
-    #   lab: string identifier for the base code for a lab.  Defaults to testlab1.
-    # Purpose:
-    #   To iterate over all the teams for the CMPUT229 GitHub organization and
-    #   assign each team a clone of the repo containing the base code.
-    def set_repos(self, lab="testlab1"):
-        print "Setting repos for {}.".format(lab)
-        teams = self.org.get_teams()
+    def set_base(self, lab):
         urls = self.load_repos()
-
         try:
             print "Setting local clone of base code."
             base, url = self.local_clone(lab)
@@ -206,11 +216,15 @@ class Manager():
                 urls["base"][lab] = url
             else:
                 urls["base"] = {lab: url}
+            return base
         except Exception as e:
             print "Error making local clone of base code."
             print e
-            return
+            return False
 
+    def assign_repos(self, lab, base):
+        teams = self.org.get_teams()
+        urls = self.load_repos()
         for team in teams:
             if team.name != "Students":
                 try:
@@ -224,7 +238,7 @@ class Manager():
                     print "Error cloning lab for " + team.name
                     print e
                     print "Waiting before trying again."
-                    time.sleep(5)
+                    sleep(5)
                     try:
                         print "Assigning " + team.name + " the repo."
                         team_repo = self.clone(lab, team, base) 
@@ -235,9 +249,58 @@ class Manager():
                     except Exception as e:
                         print "Error cloning lab for " + team.name
                         print e
-        
-        shutil.rmtree("./base/")
+                        return False
         self.write_repos(urls)
+        return True
+
+    def set_config(self):
+        return  {"url": "https://" + self.get_server() + "/github-webhook/"}
+
+    def clean_hooks(self, repo):
+        hooks = repo.get_hooks()
+        for hook in hooks:
+            if self.get_server() in hook.config["url"]:
+                hook.delete()
+
+    def make_hook(self, repo):
+        name = "web"
+        config = self.set_config()
+        events = ["push"]
+        active = True
+        hook = repo.create_hook(name, config, events, active)        
+                
+    def set_hooks(self, lab):
+        urls = self.load_repos()
+        if "base" in urls:
+            del urls["base"]
+        for team,repos in urls.items():
+            if lab in repos:
+                repo = self.org.get_repo(self.gen_name(lab, team))
+                self.clean_hooks(repo)
+                self.make_hook(repo)
+
+    # Param:
+    #   org: PyGitHub organization object
+    #   lab: string identifier for the base code for a lab.  Defaults to testlab1.
+    # Purpose:
+    #   To iterate over all the teams for the CMPUT229 GitHub organization and
+    #   assign each team a clone of the repo containing the base code.
+    def set_repos(self, lab):
+        print "Setting repos for {}.".format(lab)
+
+        base = self.set_base(lab)
+        if (base):
+            if (self.assign_repos(lab, base)):
+                if (self.set_hooks(lab)):
+                    print "Base code, repos, and webhooks assigned and set."
+                else:
+                    print "Error setting webhooks."
+            else:
+                print "Error assigning repos."
+            shutil.rmtree("./base/")
+        else:
+            print "Error assigning base code."
+
 
     # Param:
     #   lab: String
@@ -451,5 +514,4 @@ class Manager():
                 pass
 
         return commit.commit.sha
-
 
