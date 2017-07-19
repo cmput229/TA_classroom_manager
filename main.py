@@ -127,9 +127,6 @@ def main():
     #----------------------------------------------------------------------------------
     m = Manager(defs["org"])
 
-    m.set_hooks("Lab_Template")
-    return
-
     if "-t" in args:
         m.set_teams()                           # local
         m.set_git_teams()                       # remote
