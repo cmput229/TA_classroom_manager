@@ -13,9 +13,12 @@ import subprocess
 # Returns:
 #   A list of flags to be passed into Moss to identify base code files.
 def getBase(lab):
-    base_dir = "./submissions/{}/base/submission/".format(lab)
-    base_files = os.listdir("./submissions/{}/base/submission/".format(lab))
+    base_dir = "./submissions/{}/base/".format(lab)
+    base_files = os.listdir("./submissions/{}/base/".format(lab))
     base_files.sort()
+    for f in base_files:
+        if f.find(".s") == -1:
+            base_files.remove(f)
     base_flags = ["-b {}{}".format(base_dir, f) for f in base_files]
     return base_flags
 
@@ -48,12 +51,13 @@ def getArchives(archives):
 def getSubmissions(lab):
     submissions = os.listdir("./submissions/{}/".format(lab))
     submissions.remove("base")
-    submissions = ["./submissions/{}/{}/submission/".format(lab, team) for team in submissions]
+    submissions = ["./submissions/{}/{}/".format(lab, team) for team in submissions]
     files = []
     for submission in submissions:
         fs = os.listdir(submission)
         for f in fs:
-            files.append("{}{}".format(submission, f))
+            if f.find(".s") != -1:
+                files.append("{}{}".format(submission, f))
     return files
 
 # Expects repos to be gathered when called.

@@ -13,7 +13,7 @@ import os, time, re, sys
 from subprocess import Popen, PIPE, STDOUT
 
 def run(lab, fn, sample_input='\n'):
-    proc = Popen(["spim", "-file", "./submissions/{}/{}/submission/{}.s".format(lab, fn, lab)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    proc = Popen(["spim", "-file", "./submissions/{}/{}/{}.s".format(lab, fn, lab)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     proc.stdin.write(sample_input)
     return proc 
 

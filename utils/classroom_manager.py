@@ -511,11 +511,14 @@ class Manager():
 
         for c in commits:
             date = datetime.strptime(str(c.commit.author.date), "%Y-%m-%d %H:%M:%S")
+
             if date <= deadline and date > max_date:
                 commit = c
                 max_date = datetime.strptime(str(commit.commit.author.date), "%Y-%m-%d %H:%M:%S")
             else:
                 pass
+            if date > deadline:
+                return commit.commit.sha
 
         return commit.commit.sha
 
