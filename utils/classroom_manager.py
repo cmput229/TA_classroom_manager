@@ -544,9 +544,13 @@ class Manager():
     #   Reads git.token to get the oauth token that allows PyGithub and GitPython 
     #   to perform their actions.
     def get_token(self):
-        f = open("git.token", "r")
-        token = f.readline().strip()
-        return token
+        try:
+            f = open("git.token", "r")
+            token = f.readline().strip()
+            return token
+        except:
+            print("Error reading git.token.  Ensure that you have an OAuth token in git.token.")
+            return None
 
     # Purpose:
     #   Write the team defs as csv
