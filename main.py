@@ -135,6 +135,7 @@ def main():
 
     if "-D" in args:
         print pretty(defs)
+        return
 
     # SETUP
     #----------------------------------------------------------------------------------
@@ -191,8 +192,7 @@ def main():
         m.distribute(defs["repo"])
     
     if "-j" in args:
-        m.write_jobs_repos("Lab_Template")      # Set the repos component of .groovy DSL
-        m.make_jobs_DSL("Lab_Template")         # Concatenate components of DSL into valid file
+        m.make_jobs_DSL(defs["lab"])         # Concatenate components of DSL into valid file
     
     if "-n" in args:
         m.notify_all(defs["repo"])              # Notification for repo distribution

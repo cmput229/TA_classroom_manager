@@ -323,6 +323,7 @@ class Manager():
         self.set_repos(lab)
         self.notify_all(lab)
         self.set_hooks(lab)
+        self.make_jobs_DSL(lab)
 
     # Param:
     #   lab: String
@@ -415,7 +416,8 @@ class Manager():
         for team in teams:
             repos.append(self.gen_repo_name(lab, team))
 
-        out = "def repos = [\n"
+        out = "String lab = {}\n".format(lab)
+        out += "def repos = [\n"
         for r in repos:
             out += "\t\"" + r + "\",\n"
         out = out[:-2]
@@ -426,6 +428,7 @@ class Manager():
         f.close()
 
     def make_jobs_DSL(self, lab):
+        self.write_jobs_repos(lab)
         out = ""
         files = ["./jenkins/components/j_config.groovy", 
                  "./jenkins/components/j_repos.groovy", 
