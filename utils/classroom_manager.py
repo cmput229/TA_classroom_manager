@@ -319,6 +319,11 @@ class Manager():
         else:
             print "Error assigning base code."
 
+    def distribute(self, lab):
+        self.set_repos(lab)
+        self.notify_all(lab)
+        self.set_hooks(lab)
+
     # Param:
     #   lab: String
     # Purpose:
@@ -389,6 +394,7 @@ class Manager():
         hook = repo.create_hook(name, config, events, active)        
                 
     def set_hooks(self, lab):
+        print "Setting webhooks."
         urls = self.load_repos()
         if "base" in urls:
             del urls["base"]
@@ -397,6 +403,7 @@ class Manager():
                 repo = self.org.get_repo(self.gen_repo_name(lab, team))
                 self.clean_hooks(repo)
                 self.make_hook(repo)
+                print "Setting webhook from {} to {}.".format(self.gen_repo_name(lab, team), self.get_server())
 
     # JENKINS METHODS
     #----------------------------------------------------------------------------------
@@ -488,7 +495,10 @@ class Manager():
         for line in d:
             l, date = line.split(",")
             deadlines[l] = date
-        return deadlines[lab].strip()
+        if lab in deadlines:
+            return deadlines[lab].strip()
+        else:
+            print "You need to set a deadline for this lab in ./config/deadlines.csv"
 
     # Params:
     #   team: string identifier for a team

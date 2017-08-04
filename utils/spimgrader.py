@@ -103,6 +103,7 @@ def input_lines(lab):
     submissions.remove("base")
 
     for submission in submissions:
+        print "Marking submission for {}.".format(submission)
         #cycle through samples to test:
         output_file = ""
         processes = []

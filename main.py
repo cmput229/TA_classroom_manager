@@ -9,42 +9,72 @@ import utils.moss
 
 # flags:  
 def help():  
-    return """---------------------------------------------------------------------------------------
-|   This is a list of flags for the command-line:
+    return \
+"""---------------------------------------------------------------------------------------
+|   USER COMMANDS
+|   
+|   NAME
+|       main.py - The entry point into a toolset to manage classrooms using Git, Github, MOSS, 
+|       & Jenkins.
 |
-|   INFO
-|=====================================================================================
-|   -h: print help                                          ([h]elp)
-|   -D: print defaults                                      ([D]efaults)
+|   SYNOPSIS
+|       main.py [OPTION]...
 |
-|   SETUP
-|=====================================================================================
-|   -p <prefix>: set optional prefix for assignments        (set [p]refix)
-|   -S <server url>: set server url                         (set [S]erver)
-|   -o <organization_name>: set organization name           ([o]rg set)
-|   -r <repo_name>: set repo for script                     ([r]epo set)
-|   -A <archive_folder>: set archive directory              ([a]rchive set)
-|   -j: create Jobs DSL file for Jenkins                    ([j]obs DSL)
-|   -t: set teams for the organization locally              ([t]eams set)
-|   -a <team> <member>: Add <member> to <team>              ([a]dd member)
-|   -d <team> <member>: delete <member> from <team>         ([d]emove member)
+|   DECRIPTION
+|       main.py provides an interface to the a set of tools that can be used to automate classroom 
+|       administration for a course.
 |
-|   DISTRIBUTION
-|=====================================================================================
-|   -s (-r <repo>): distribute base repo to teams on GitHub ([s]et repos)
-|   -g (-r <base_repo>): collect repos from students        ([g]et repos)
-|   -w (-r <repo>): set webhooks for teams working on repo  (set [w]ebhooks)
-|   -n: notify students of repo distribution                ([n]otify)
+|   OPTIONS
+|   Informational options
+|   -h, --help: 
+|       print help
+|   -D: 
+|       print defaults                                      ([D]efaults)
 |
-|   HOUSEKEEPING
-|=====================================================================================
-|   -m: mark repos                                          ([m]ark repos)
-|   -c: compare repos using MOSS                            ([c]ompare)
-|   -x: clear local repos (-r <assignment>)                 ()
-|   -X: clear teams & repos on GitHub                       ()
+|   Setup options
+|   -P <prefix>: 
+|       set optional prefix for assignments                 (set [P]refix)
+|   -S <server url>: 
+|       set server url                                      (set [S]erver)
+|   -O <organization_name>: 
+|       set organization name                               ([O]rg set)
+|   -R <repo_name>: 
+|       set repo for script                                 ([R]epo set)
+|   -A <archive_folder>: 
+|       set archive directory                               ([A]rchive set)
+|   -j: 
+|       create Jobs DSL file for Jenkins                    ([j]obs DSL)
+|   -t: 
+|       set teams for the organization locally              ([t]eams set)
+|   -a <team> <member>: 
+|       Add <member> to <team>                              ([a]dd member)
+|   -r <team> <member>: 
+|       remove <member> from <team>                         ([r]emove member)
+|
+|   Distribution options
+|   -d:
+|       distribute repos, set webhooks, and notify
+|   -s (-R <repo>): 
+|       distribute base repo to teams on GitHub             ([s]et repos)
+|   -g (-R <base_repo>): 
+|       collect repos from students                         ([g]et repos)
+|   -w (-R <repo>): 
+|       set webhooks for teams working on repo              (set [w]ebhooks)
+|   -n: 
+|       notify students of repo distribution                ([n]otify)
+|
+|   Housekeeping options
+|   -m: 
+|       mark repos                                          ([m]ark repos)
+|   -c: 
+|       compare repos using MOSS                            ([c]ompare)
+|   -x: 
+|       clear local repos (-r <assignment>)                 ()
+|   -X: 
+|       clear teams & repos on GitHub                       ()
 |
 ---------------------------------------------------------------------------------------
-    """
+"""
 
 # Purpose:
 #   Returns a dictionary used to represent default values for the manager to use.
@@ -108,17 +138,17 @@ def main():
 
     # SETUP
     #----------------------------------------------------------------------------------
-    if "-p" in args:
+    if "-P" in args:
         print "Updating prefix."
-        defs["prefix"] = parse_flag("-p", args)[0]
+        defs["prefix"] = parse_flag("-P", args)[0]
 
-    if "-o" in args:
+    if "-O" in args:
         print "Updating organization."
-        defs["org"] = parse_flag("-o", args)[0]
+        defs["org"] = parse_flag("-O", args)[0]
 
-    if "-r" in args:
+    if "-R" in args:
         print "Updating repo."
-        defs["repo"] = parse_flag("-r", args)[0]
+        defs["repo"] = parse_flag("-R", args)[0]
 
     if "-A" in args:
         print "Updating archives."
@@ -145,8 +175,8 @@ def main():
         members = flag_args[1:]                 # set members
         m.add_members(team, members)            # add
 
-    if "-d" in args:
-        flag_args = parse_flag("-d", args)      # parse
+    if "-r" in args:
+        flag_args = parse_flag("-r", args)      # parse
         team = flag_args[0]                     # set team
         members = flag_args[1:]                 # set members
         m.del_members(team, members)            # delete
@@ -156,6 +186,9 @@ def main():
 
     if "-w" in args:
         m.set_hooks(defs["repo"])               # Set webhooks to distributed repos
+
+    if "-d" in args:
+        m.distribute(defs["repo"])
     
     if "-j" in args:
         m.write_jobs_repos("Lab_Template")      # Set the repos component of .groovy DSL
