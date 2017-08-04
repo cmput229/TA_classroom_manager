@@ -21,7 +21,11 @@ repos.each {
     }
     steps {
       shell("git checkout master")
-      shell("python hello.py >> tmp")
+      shell("git pull")
+
+      shell(sprintf('%1$s %2$s', ["python ../grader/student_grader.py", lab]))
+      shell(sprintf('%1$s%2$s %3$s', ["cp ../grader/diagnostics/", lab, " ./"]))
+
       shell("git add .")
       shell("git commit -m 'Jenkins CI Response'")
     }

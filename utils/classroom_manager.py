@@ -221,6 +221,7 @@ class Manager():
 
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------
+    # Assumes that the url for the lab's repo within the organization matches the repo name
     def set_base(self, lab):
         urls = self.load_repos()
         try:
@@ -416,7 +417,7 @@ class Manager():
         for team in teams:
             repos.append(self.gen_repo_name(lab, team))
 
-        out = "String lab = {}\n".format(lab)
+        out = "String lab = \"{}\"\n".format(lab)
         out += "def repos = [\n"
         for r in repos:
             out += "\t\"" + r + "\",\n"
@@ -428,6 +429,7 @@ class Manager():
         f.close()
 
     def make_jobs_DSL(self, lab):
+        print "Writing a jenkins jobs file to ./jenkins/jobs.groovy"
         self.write_jobs_repos(lab)
         out = ""
         files = ["./jenkins/components/j_config.groovy", 
@@ -615,14 +617,18 @@ class Manager():
     # Purpose:
     #   To read the repos assigned to teams from file.
     def load_repos(self):
-        f = open("./config/repos.json", "r")
-        repos = json.load(f)
-        f.close()
-        return repos
+        try:
+            f = open("./config/repos.json", "r")
+            repos = json.load(f)
+            f.close()
+            return repos
+        except:
+            return {}
 
     # Purpose:
     #   To save the repos assigned to teams to file.
     def write_repos(self, urls):
+        print "Writing repo urls to ./config/repos.json."
         f = open("./config/repos.json", "w")
         repos = json.dump(urls, f)
         f.close()

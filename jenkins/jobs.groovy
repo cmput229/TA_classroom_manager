@@ -1,9 +1,10 @@
 String c = '41fa261c-da80-4158-9f7f-310460627d64'
 String org = "GitHubClassroomTestCMPUT229/"
 
+String lab = "lab1"
 def repos = [
-	"team0_Lab_Template",
-	"team1_Lab_Template"
+	"team0_lab1",
+	"team1_lab1"
 ]
 
 repos.each {
@@ -29,7 +30,11 @@ repos.each {
     }
     steps {
       shell("git checkout master")
-      shell("python hello.py >> tmp")
+      shell("git pull")
+
+      shell(sprintf('%1$s %2$s', ["python ../grader/student_grader.py", lab]))
+      shell("cp ../grader/diagnostics ./")
+
       shell("git add .")
       shell("git commit -m 'Jenkins CI Response'")
     }

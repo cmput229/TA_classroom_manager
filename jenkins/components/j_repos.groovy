@@ -1,4 +1,5 @@
+String lab = "lab1"
 def repos = [
-	"team0_Lab_Template",
-	"team1_Lab_Template"
+	"team0_lab1",
+	"team1_lab1"
 ]
