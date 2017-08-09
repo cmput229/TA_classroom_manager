@@ -3,7 +3,6 @@ A repo to hold all the tools being developed.
 
 This set of tools can be used to:  
 - Distribute assignment starter code to students as private repos belonging to a GitHub organization.
-- Provide continuous integration to students with Travis running spim.
 - Provide continuous integration to students with Jenkins.
 - Associate webhooks with the repos assigned to students in order to trigger Jenkins pulls.
 - Collect repositories up to a deadline for each assignment.
