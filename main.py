@@ -42,6 +42,14 @@ def help():
 |       set repo for script                                 ([R]epo set)
 |   -A <archive_folder>: 
 |       set archive directory                               ([A]rchive set)
+|
+|   Main Actions
+|   -d:
+|       distribute repos, set webhooks, and notify
+|   -f:
+|       fetch repos, mark them with autograder, and compare with MOSS
+|
+|   Supplementary actions
 |   -j: 
 |       create Jobs DSL file for Jenkins                    ([j]obs DSL)
 |   -t: 
@@ -50,10 +58,6 @@ def help():
 |       Add <member> to <team>                              ([a]dd member)
 |   -r <team> <member>: 
 |       remove <member> from <team>                         ([r]emove member)
-|
-|   Distribution options
-|   -d:
-|       distribute repos, set webhooks, and notify
 |   -s (-R <repo>): 
 |       distribute base repo to teams on GitHub             ([s]et repos)
 |   -g (-R <base_repo>): 
@@ -62,8 +66,6 @@ def help():
 |       set webhooks for teams working on repo              (set [w]ebhooks)
 |   -n: 
 |       notify students of repo distribution                ([n]otify)
-|
-|   Housekeeping options
 |   -m: 
 |       mark repos                                          ([m]ark repos)
 |   -c: 
@@ -190,6 +192,14 @@ def main():
 
     if "-d" in args:
         m.distribute(defs["repo"])
+
+    if "-f" in args:
+        r = defs["repo"]
+        a = defs["archives"]
+
+        m.get_repos(r)
+        grader.main(r)
+        moss.submit(r, archives=a)
     
     if "-j" in args:
         m.make_jobs_DSL(defs["lab"])         # Concatenate components of DSL into valid file
