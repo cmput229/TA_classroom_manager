@@ -494,10 +494,7 @@ class Manager():
     def get_commits(self, team, lab):
         name = self.gen_repo_name(lab, team)
         repo = self.org.get_repo(name)
-        print repo
-        print repo.get_commits()
         commits = [c for c in repo.get_commits()]
-        print commits
         return commits
 
     # Params:
