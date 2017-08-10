@@ -254,12 +254,6 @@ class Manager():
         base_url = self.url+lab
         repo_name = self.gen_repo_name(lab, team.name)
         team_repo = self.org.create_repo(repo_name, team_id=team)
-<<<<<<< HEAD
-=======
-
-        print repo_name
-
->>>>>>> ae5ec3cad7f19ad8f309d91782c8bfe0b92df1b7
         repo_url = self.url + repo_name
         remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
         remote.push(refspec="{}:{}".format("master", "master"))
