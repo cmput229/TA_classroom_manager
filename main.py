@@ -217,10 +217,10 @@ def main():
         moss.submit(defs["repo"], archives=defs["archives"])    # Submit to Moss
 
     if "-x" in args:
-        print "THIS WILL CLEAR THE LOCAL REPOS FOR {}.".format(defs["repo"])
+        print "THIS WILL CLEAR THE REMOTE REPOS FOR {}.".format(defs["repo"])
         confirm = (raw_input("Are you sure? [y/n]: ")[0].lower() == 'y')
         if confirm:
-            m.del_local_repos(defs["repo"])     # remove local repos
+            m.del_git_repos()     # remove local repos
 
     if "-X" in args:
         print "THIS WILL CLEAR ALL TEAM REPOS & TEAMS FROM GitHub."
