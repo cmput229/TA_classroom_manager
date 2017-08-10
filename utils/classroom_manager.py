@@ -251,6 +251,8 @@ class Manager():
         repo_name = self.gen_repo_name(lab, team.name)
         team_repo = self.org.create_repo(repo_name, team_id=team)
 
+        print repo_name
+
         repo_url = self.url + repo_name
         remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
         remote.push()
@@ -272,12 +274,27 @@ class Manager():
 
     def assign_repos(self, lab, base):
         teams = self.org.get_teams()
+        teams = [team for team in teams if team.name != "Students"]
         urls = self.load_repos()
         for team in teams:
-            if team.name != "Students":
+            repos = team.get_repos()
+            repos = [repo.name for repo in repos]
+            lab_name = self.gen_repo_name(lab, team.name)
+            try:
+                print "Assigning " + team.name + " the repo."
+                team_repo = self.remote_clone(lab, team, base)
+                if team.name in urls:
+                    urls[team.name][lab] = team_repo
+                else:
+                    urls[team.name] = {lab: team_repo}
+            except Exception as e:
+                print "Error cloning lab for " + team.name
+                print e
+                print "Waiting before trying again."
+                sleep(5)
                 try:
                     print "Assigning " + team.name + " the repo."
-                    team_repo = self.remote_clone(lab, team, base)
+                    team_repo = self.remote_clone(lab, team, base) 
                     if team.name in urls:
                         urls[team.name][lab] = team_repo
                     else:
@@ -285,19 +302,8 @@ class Manager():
                 except Exception as e:
                     print "Error cloning lab for " + team.name
                     print e
-                    print "Waiting before trying again."
-                    sleep(5)
-                    try:
-                        print "Assigning " + team.name + " the repo."
-                        team_repo = self.remote_clone(lab, team, base) 
-                        if team.name in urls:
-                            urls[team.name][lab] = team_repo
-                        else:
-                            urls[team.name] = {lab: team_repo}
-                    except Exception as e:
-                        print "Error cloning lab for " + team.name
-                        print e
-                        return False
+                    return False
+
         self.write_repos(urls)
         return True 
 
@@ -308,6 +314,12 @@ class Manager():
     #   To iterate over all the teams for the CMPUT229 GitHub organization and
     #   assign each team a clone of the repo containing the base code.
     def set_repos(self, lab):
+        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        
+        if teams == []:
+            print "ERROR: You need to set teams (-t) before distributing repos to them!"
+            return False
+
         print "Setting repos for {}.".format(lab)
 
         base = self.set_base(lab)
@@ -319,12 +331,13 @@ class Manager():
             shutil.rmtree("./base/")
         else:
             print "Error assigning base code."
+            return False
 
     def distribute(self, lab):
-        self.set_repos(lab)
-        self.notify_all(lab)
-        self.set_hooks(lab)
-        self.make_jobs_DSL(lab)
+        if self.set_repos(lab):
+        # self.notify_all(lab)
+            self.set_hooks(lab)
+            self.make_jobs_DSL(lab)
 
     # Param:
     #   lab: String
@@ -460,6 +473,7 @@ class Manager():
             if team.name != "Students":
                 for member in team.get_members():
                     contact = member.email
+                    print contact
                     if contact != None:
                         print "{} is notified that {} is distributed.".format(member.login, lab)
                         url = urls[team.name][lab]
@@ -477,9 +491,12 @@ class Manager():
     # Returns:
     #   A list of PyGitHub commit objects
     def get_commits(self, team, lab):
-        name = "{}_{}".format(team, lab)
+        name = self.gen_repo_name(lab, team)
         repo = self.org.get_repo(name)
+        print repo
+        print repo.get_commits()
         commits = [c for c in repo.get_commits()]
+        print commits
         return commits
 
     # Params:
