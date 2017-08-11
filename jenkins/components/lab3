@@ -11,6 +11,7 @@
       shell("rm ./runTest.sh")
       shell("rm ./testfile.bin")
       shell("rm ./common.s")
+      shell("rm ./testBuild.s")
 
       shell("git add .")
       shell("git commit -m 'Jenkins CI Response'")
