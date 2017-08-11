@@ -28,6 +28,8 @@ repos.each {
     triggers {
       githubPush()
     }
+
+
     steps {
       shell("git checkout master")
       shell("git pull")
@@ -38,6 +40,7 @@ repos.each {
       shell("git add .")
       shell("git commit -m 'Jenkins CI Response'")
     }
+
     configure { node ->
       node / "publishers" << "hudson.plugins.git.GitPublisher" {
         configVersion "2"

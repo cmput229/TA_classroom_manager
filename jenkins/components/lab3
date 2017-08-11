@@ -1,0 +1,17 @@
+    steps {
+      shell("git checkout master")
+      shell("git pull")
+
+      shell("cp ~/grader/lab3/runTest.sh ./")
+      shell("cp ~/grader/lab3/testfile.bin ./")
+      shell("cp ~/grader/lab3/common.s ./")
+
+      shell("bash ./runTest.sh ./lab3.s ./testfile.bin > ./lab3")
+
+      shell("rm ./runTest.sh")
+      shell("rm ./testfile.bin")
+      shell("rm ./common.s")
+
+      shell("git add .")
+      shell("git commit -m 'Jenkins CI Response'")
+    }

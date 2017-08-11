@@ -448,8 +448,10 @@ class Manager():
         self.write_jobs_repos(lab)
         out = ""
         files = ["./jenkins/components/j_config.groovy", 
-                 "./jenkins/components/j_repos.groovy", 
-                 "./jenkins/components/j_skeleton.groovy"]
+                 "./jenkins/components/j_repos.groovy",
+                 "./jenkins/components/j_pre.groovy",  
+                 "./jenkins/components/{}".format(lab),
+                 "./jenkins/components/j_post.groovy"]
         for f in files:
             f = open(f, "r")
             out += f.read() + "\n"
@@ -529,8 +531,6 @@ class Manager():
     # Returns:
     #   unique id for the commit pre/at the deadline.
     def get_repo_by_deadline(self, team, lab):
-        # TODO: GitHub timestamps are at a different time than local.  Ensure that the math
-        #       to get correct timestamp is correct.
         deadline = datetime.strptime(self.get_deadline(lab), "%Y-%m-%d %H:%M:%S")
         correction = timedelta(hours=6)
         deadline = deadline + correction
