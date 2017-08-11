@@ -333,6 +333,7 @@ class Manager():
         else:
             print "Error assigning base code."
             return False
+        return True
 
     def distribute(self, lab):
         if self.set_repos(lab):
