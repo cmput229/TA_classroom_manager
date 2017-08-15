@@ -16,6 +16,9 @@ In order to run setup.sh, you will require Virtualenv to be installed.
 * [virtualenv](https://virtualenv.pypa.io/en/stable/)  
 
 
+The module responsible for gathering usernames requires npm to be installed.
+* [npm](https://www.npmjs.com/)
+
 This toolset uses these Python Modules at these versions:  
 * GitPython, version 2.1.3
 * PyGithub, version 1.34
