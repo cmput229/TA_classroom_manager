@@ -1,7 +1,7 @@
-**/*~
-**/*.pyc
-**/venv
+*.pyc
 *.token
+**/*~
+**/venv
 **/marker/base/
 **/marker/outputs/
 **/marker/results/
