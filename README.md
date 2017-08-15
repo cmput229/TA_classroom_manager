@@ -12,6 +12,10 @@ This set of tools can be used to:
 - Collate results for the class's assignments as .csv files.
 
 # Requirements
+In order to run setup.sh, you will require Virtualenv to be installed.
+* [virtualenv](https://virtualenv.pypa.io/en/stable/)  
+
+
 This toolset uses these Python Modules at these versions:  
 * GitPython, version 2.1.3
 * PyGithub, version 1.34
