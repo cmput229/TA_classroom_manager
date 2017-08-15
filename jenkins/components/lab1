@@ -2,8 +2,9 @@
       shell("git checkout master")
       shell("git pull")
 
+      shell("mkdir ./Jenkins/")
       shell(sprintf('%1$s %2$s', ["python ../grader/student_grader.py", lab]))
-      shell(sprintf('%1$s%2$s %3$s', ["cp ../grader/diagnostics/", lab, " ./"]))
+      shell(sprintf('%1$s%2$s %3$s', ["cp ../grader/diagnostics/", lab, " ./Jenkins/$('date +%Y-%m-%d:%H:%M:%S')"]))
 
       shell("git add .")
       shell("git commit -m 'Jenkins CI Response'")

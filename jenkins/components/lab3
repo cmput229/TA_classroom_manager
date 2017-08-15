@@ -6,7 +6,8 @@
       shell("cp ~/grader/lab3/testfile.bin ./")
       shell("cp ~/grader/lab3/common.s ./")
 
-      shell("bash ./runTest.sh ./lab3.s ./testfile.bin > ./lab3")
+      shell("mkdir ./Jenkins/")
+      shell("bash ./runTest.sh ./lab3.s ./testfile.bin > ./Jenkins/$(date +%Y-%m-%d:%H:%M:%S)")
 
       shell("rm ./runTest.sh")
       shell("rm ./testfile.bin")
