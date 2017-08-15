@@ -4,6 +4,7 @@ import json
 import shutil
 from github import Github
 from git import Repo
+import git
 from datetime import datetime
 from datetime import timedelta
 from time import sleep
@@ -43,6 +44,7 @@ from notifier import send_notification as notify
 #   - del_git_teams
 #   - add_members
 #   - del_members
+#   - get_usernames
 #
 #   DISTRIBUTION METHODS
 #   -------------------------
@@ -223,6 +225,47 @@ class Manager():
         if members == []:
             team.delete()
 
+    # Uses init_usernames.sh to establish a repo cloning https://github.com/Klortho/get-github-usernames.git
+    # * Installs npm to permit the repo's use.
+    # * Copies config/users.txt into that folder to inform the tool what github emails are boeing used.
+    # * Calls node ./index.js to create dummy commits for each user identified by email.
+    #   * Github maps the command-line git commits' emails to Github users.
+    # Uses pygithub to create a new repo on Github.
+    # Use gitpython to push the dummy repo to Github.
+    # Uses pygithub to comb through the commits made to that repo.
+    # Pull the usernames in.
+    # Write the usernames to file in config/users.csv
+    # Delete the github repo after getting usernames.
+    # Delete the local repo.
+    # Delete the cloned repo.
+    def get_usernames(self):
+        print("Gathering usernames.")
+        usernames = []
+        subprocess.call(["./utils/init_usernames.sh"])
+        print("init_usernames completed.")
+        remote = self.org.create_repo("usernames")
+        remote_url = self.url + "usernames"
+        repo = Repo("./tmp/dummy-repo/")
+        print("Init local & remote.")
+        origin = repo.create_remote("usernames", self.insert_auth(remote_url))
+        origin.push(refspec="{}:{}".format("master", "master"))
+        print("Pushed.")
+
+        authors = [c.author.login for c in remote.get_commits()]
+        
+        f = open("./config/users.csv", "w")
+        f.write(",".join(authors))
+        f.close()
+        f = open("./config/users.json", "w")
+        f.write(json.dumps(authors))
+        f.close()
+
+        print("Github usernames written to ./config/users.csv and ./config/users.json")
+
+        remote.delete()
+        shutil.rmtree("./tmp/")
+        print("Working directory clean.")
+
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------
     # Assumes that the url for the lab's repo within the organization matches the repo name
@@ -337,7 +380,7 @@ class Manager():
 
     def distribute(self, lab):
         if self.set_repos(lab):
-        # self.notify_all(lab)
+            # self.notify_all(lab)
             self.set_hooks(lab)
             self.make_jobs_DSL(lab)
 

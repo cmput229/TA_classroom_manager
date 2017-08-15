@@ -44,6 +44,8 @@ def help():
 |       set archive directory                               ([A]rchive set)
 |
 |   Main Actions
+|   -u:
+|       gather usernames from github by referencing emails in ./config/users.txt
 |   -d:
 |       distribute repos, set webhooks, and notify
 |   -f:
@@ -166,6 +168,9 @@ def main():
     # WORK
     #----------------------------------------------------------------------------------
     m = Manager(defs["org"])
+
+    if "-u" in args:
+        m.get_usernames()
 
     if "-t" in args:
         m.set_teams()                           # local
