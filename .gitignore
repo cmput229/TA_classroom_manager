@@ -11,8 +11,8 @@
 **/marker/summary/
 **/moss/results/
 **/submissions/
-./utils/*.pyo
-./utils/*.pyc
+utils/*.pyo
+utils/*.pyc
 
 
 
