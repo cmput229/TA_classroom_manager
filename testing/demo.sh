@@ -31,8 +31,13 @@ clear
 
 echo "Changing lab assignment & distributing."
 ./main.py -R lab3 -d
-read -p "Press ENTER to change to lab1 and collect."
+read -p "Press ENTER to emulate student work."
 clear
+
+echo "Emulating student work on lab1."
+./testing/lab1/demo.sh
+read -p "Press ENTER to change to lab1 and collect."
+clear 
 
 echo "Changing lab and collecting repos."
 ./main.py -R lab1

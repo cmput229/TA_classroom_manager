@@ -42,6 +42,8 @@ echo "--------------------------------------------------"
 echo "Changing lab and collecting repos."
 echo "--------------------------------------------------"
 echo ""
+./testing/lab1/demo.sh
+read -p "Pausing\n" -t 5
 ./main.py -R lab1
 ./main.py -f
 echo ""
