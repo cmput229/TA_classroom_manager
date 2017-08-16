@@ -48,6 +48,7 @@ from notifier import send_notification as notify
 #
 #   DISTRIBUTION METHODS
 #   -------------------------
+#   - is_assigned
 #   - set_base
 #   - remote_clone
 #   - local_clone
@@ -116,7 +117,7 @@ class Manager():
     # TEAM METHODS
     #----------------------------------------------------------------------------------
 
-    # Default: Each student in the class is in their own team
+    # Default:      Each student in the class is in their own team
     # Nondefault:   If students are allowed to form groups, then their groups should
     #               be identified in teams.txt
     # Should check that students are not member of more than one group.
@@ -127,13 +128,14 @@ class Manager():
     def set_teams():
         print "Parsing class & team files."
         teams = {}
+
         class_list = open("./config/class.csv", "r")
-        teams_list = open("./config/teams.csv", "r")
-        t = teams_list.readlines()
         c = class_list.read()
-        t = [line.strip().split(",") for line in t]
         c = c.strip().split(",")
         class_list.close()
+
+        teams_list = open("./config/teams.csv", "r")
+        t = [line.strip().split(",") for line in teams_list.readlines()]
         teams_list.close()
 
         i = 0
@@ -175,8 +177,9 @@ class Manager():
                 print "Created " + team + " on GitHub."
             except:
                 print "Error creating team: team {} already exists.".format(team)
-            for member in teams[team]:
-                t.add_to_members(self.hub.get_user(member))
+            else:
+                for member in teams[team]:
+                    t.add_to_members(self.hub.get_user(member))
     
     # Purpose:
     #   Gets the PyGitHub teams
