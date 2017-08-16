@@ -243,7 +243,6 @@ class Manager():
     # Delete the cloned repo.
     def get_usernames(self):
         print("Gathering usernames.")
-        usernames = []
         subprocess.call(["./utils/init_usernames.sh"])
         print("init_usernames completed.")
         remote = self.org.create_repo("usernames")
@@ -254,20 +253,34 @@ class Manager():
         origin.push(refspec="{}:{}".format("master", "master"))
         print("Pushed.")
 
-        authors = [c.author.login for c in remote.get_commits()]
-        
-        f = open("./config/users.csv", "w")
-        f.write(",".join(authors))
-        f.close()
-        f = open("./config/users.json", "w")
-        f.write(json.dumps(authors))
-        f.close()
+        try:
+            e = open("./config/users.txt", "r")
+            emails = [email.strip() for email in e.readlines() if email.strip() != ""]
+            emails.reverse()
+            e.close()
+            authors = [c.author.login for c in remote.get_commits()]
+            login_to_email = {authors[i]: emails[i] for i in range(len(authors))}
 
-        print("Github usernames written to ./config/users.csv and ./config/users.json")
+            f = open("./config/log_to_email.json", "w")
+            f.write(json.dumps(login_to_email))
+            f.close()
+            f = open("./config/users.csv", "w")
+            f.write(",".join(authors))
+            f.close()
+            f = open("./config/users.json", "w")
+            f.write(json.dumps(authors))
+            f.close()
 
-        remote.delete()
-        shutil.rmtree("./tmp/")
-        print("Working directory clean.")
+            print("Github usernames written to ./config/users.csv and ./config/users.json")
+            print("JSON to match usernames to email accounts written to ./config/log_to_email.json")
+        except:
+            print("WARNING: GITHUB USERNAMES NOT WRITTEN.")
+        try:
+            remote.delete()
+            shutil.rmtree("./tmp/")
+            print("Working directory clean.")
+        except:
+            print("WARNING: ./tmp/ REMAINS IN FILETREE.")
 
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------
@@ -393,9 +406,12 @@ class Manager():
 
     def distribute(self, lab):
         if self.set_repos(lab):
-            # self.notify_all(lab)
-            self.set_hooks(lab)
-            self.make_jobs_DSL(lab)
+            try:
+                self.notify_all(lab)
+                self.set_hooks(lab)
+                self.make_jobs_DSL(lab)
+            except:
+                print("ERROR: REPOS ASSIGNED, BUT NOTIFICATION, HOOKS, OR JOBS_DSL FAILED.")
 
     # Param:
     #   lab: String
@@ -526,20 +542,24 @@ class Manager():
     #   to iterate over all students by team in order to notify them
     #   that the lab has been assigned.
     def notify_all(self, lab):
-        teams = self.org.get_teams()
+        teams = [team for team in self.org.get_teams() if team.name != "Students"]
         urls = self.load_repos()
+        log2email = load_log_to_email()
 
         for team in teams:
-            if team.name != "Students":
+            repos = [t.name for t in team.get_repos()]
+            notify_repo = self.gen_repo_name(lab, team.name)
+            if notify_repo in repos:
                 for member in team.get_members():
-                    contact = member.email
-                    print contact
-                    if contact != None:
-                        print "{} is notified that {} is distributed.".format(member.login, lab)
-                        url = urls[team.name][lab]
+                    contact = log2email[member.login]
+                    url = urls[team.name][lab]
+                    try:
                         notify(contact, team.name, lab, url)
-                    else:
-                        print "{} does not have their public email set.".format(member.login)
+                        print("{} is notified that {} is distributed.".format(member.login, lab))
+                    except:
+                        print("ERROR: SENDING THE NOTIFICATION HAS FAILED.")
+            else:
+                print("ERROR: YOU ARE ATTEMPTING TO NOTIFY {} ABOUT A REPO THEY HAVE NOT BEEN ASSIGNED.".format(team.name))
 
     # COLLECTION METHODS
     #----------------------------------------------------------------------------------
@@ -705,5 +725,14 @@ class Manager():
 
 def parse_date(date):
     return datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+
+def load_log_to_email():
+    try:
+        f = open("./config/log_to_email.json", "r")
+        log2email = json.load(f)
+        f.close()
+        return log2email
+    except:
+        return {}
 
 

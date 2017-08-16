@@ -198,7 +198,7 @@ def main():
         if not m.is_assigned(defs["repo"]):
             m.set_repos(defs["repo"])               # Set github repos
         else:
-            print("The repo {} has already been assigned to at lest one team".format(defs["repo"]))
+            print("The repo {} has already been assigned to at least one team".format(defs["repo"]))
 
     if "-w" in args:
         if m.is_assigned(defs["repo"]):
