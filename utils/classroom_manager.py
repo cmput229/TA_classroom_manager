@@ -615,7 +615,7 @@ class Manager():
         commits = self.get_commits(team, lab)
 
         # TODO: FIGURE OUT A FASTER WAY TO DO THIS.  STILL SLOW.
-        print("Parsing the commits.")
+        print("Parsing the commits.  This is woefully slow.")
         commits = [(parse_date(str(commit.commit.author.date)),
                     commit.commit.sha)
                     for commit in commits]

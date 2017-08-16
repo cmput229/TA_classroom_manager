@@ -42,3 +42,4 @@ clear
 
 ./main.py -Q
 ./main.py -O -R -A -S -D
+deactivate
