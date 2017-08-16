@@ -1,6 +1,9 @@
 *.pyc
+*.pyo
 *.token
 **/*~
+**/*.pyc
+**/*.pyo
 **/venv
 **/marker/base/
 **/marker/outputs/
