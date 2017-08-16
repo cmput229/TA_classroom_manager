@@ -557,7 +557,7 @@ class Manager():
                         notify(contact, team.name, lab, url)
                         print("{} is notified that {} is distributed.".format(member.login, lab))
                     except:
-                        print("ERROR: SENDING THE NOTIFICATION HAS FAILED.")
+                        print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
             else:
                 print("ERROR: YOU ARE ATTEMPTING TO NOTIFY {} ABOUT A REPO THEY HAVE NOT BEEN ASSIGNED.".format(team.name))
 
