@@ -106,7 +106,7 @@ def update(defs):
         return
 
 def pretty(defs):
-    p = "---------------------------------------------------------------------------------------\n"
+    p = "--------------------------------------------------\n"
     p += "| Current Values Used by the Classroom Manager\n"
     p += "|\n"
     for k, v in defs.items():
@@ -114,7 +114,7 @@ def pretty(defs):
             p += "| {}:\t\t{}\n".format(k, v)
         else:
             p += "| {}:\t{}\n".format(k, v)
-    p += "---------------------------------------------------------------------------------------"
+    p += "--------------------------------------------------\n"
     return p
 
 def parse_flag(flag, args):
@@ -135,10 +135,6 @@ def main():
 
     if "-h" in args or "-H" in args or "--help" in args:
         print help()
-        return
-
-    if "-D" in args:
-        print pretty(defs)
         return
 
     # SETUP
@@ -165,9 +161,18 @@ def main():
     
     update(defs)
 
+    if "-D" in args:
+        print pretty(defs)
+        return
+
     # WORK
     #----------------------------------------------------------------------------------
-    m = Manager(defs["org"])
+    m = None
+    if defs["org"] != "":
+        m = Manager(defs["org"])
+    else:
+        print("WARNING: Organization is not set for the service.")
+        return
 
     if "-u" in args:
         m.get_usernames()
@@ -255,6 +260,13 @@ def main():
         if confirm:
             m.del_git_repos()                   # remove remote repos
             m.del_git_teams()                   # remove remote teams
+
+    
+    # For automated testing.
+    if "-Q" in args:
+        m.del_git_repos()                   # remove remote repos
+        m.del_git_teams()                   # remove remote teams
+
     return
 
 if __name__ == "__main__":
