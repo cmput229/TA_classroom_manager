@@ -268,6 +268,16 @@ class Manager():
 
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------
+    
+    # Used to check whether an assignment has been assigned before assigning it.
+    # If repos != [], then it is because there is at least one repo assigned to
+    # a team for that assignment.  If that is true, then the repos have been assigned
+    # in the past.
+    def is_assigned(self, lab):
+        repos = [r.name for r in self.org.get_repos() if lab in r.name and r.name != lab and "team" in r.name]
+        return repos != []
+        
+
     # Assumes that the url for the lab's repo within the organization matches the repo name
     def set_base(self, lab):
         urls = self.load_repos()

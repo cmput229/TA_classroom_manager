@@ -190,36 +190,58 @@ def main():
         m.del_members(team, members)            # delete
     
     if "-s" in args:
-        m.set_repos(defs["repo"])               # Set github repos
+        if not m.is_assigned(defs["repo"]):
+            m.set_repos(defs["repo"])               # Set github repos
+        else:
+            print("The repo {} has already been assigned to at lest one team".format(defs["repo"]))
 
     if "-w" in args:
-        m.set_hooks(defs["repo"])               # Set webhooks to distributed repos
+        if m.is_assigned(defs["repo"]):
+            m.set_hooks(defs["repo"])               # Set webhooks to distributed repos
+        else:
+            print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
 
     if "-d" in args:
-        m.distribute(defs["repo"])
+        if not m.is_assigned(defs["repo"]):
+            m.distribute(defs["repo"])
+        else:
+            print("The repo {} has already been assigned to at lest one team".format(defs["repo"]))
 
     if "-f" in args:
-        r = defs["repo"]
-        a = defs["archives"]
+        if m.is_assigned(defs["repo"]):
+            r = defs["repo"]
+            a = defs["archives"]
 
-        m.get_repos(r)
-        grader.main(r)
-        moss.submit(r, archives=a)
+            m.get_repos(r)
+            grader.main(r)
+            moss.submit(r, archives=a)
+        else:
+            print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
     
     if "-j" in args:
         m.make_jobs_DSL(defs["lab"])         # Concatenate components of DSL into valid file
+
     
     if "-n" in args:
         m.notify_all(defs["repo"])              # Notification for repo distribution
 
     if "-g" in args:
-        m.get_repos(defs["repo"])               # Get github repos
+        if m.is_assigned(defs["repo"]):
+            m.get_repos(defs["repo"])               # Get github repos
+        else:
+            print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
 
     if "-m" in args:
-        grader.main(defs["repo"])               # Grade with spimgrader
+        if m.is_assigned(defs["repo"]):
+            grader.main(defs["repo"])               # Grade with spimgrader
+        else:
+            print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
 
     if "-c" in args:
-        moss.submit(defs["repo"], archives=defs["archives"])    # Submit to Moss
+        if m.is_assigned(defs["repo"]):
+            moss.submit(defs["repo"], archives=defs["archives"])    # Submit to Moss
+        else:
+            print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
 
     if "-x" in args:
         print "THIS WILL CLEAR THE REMOTE REPOS FOR {}.".format(defs["repo"])
