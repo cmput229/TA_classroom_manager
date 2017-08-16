@@ -512,7 +512,7 @@ class Manager():
             f = open(f, "r")
             out += f.read() + "\n"
             f.close()
-        f = open("./jenkins/jobs.groovy", "w")
+        f = open("./jenkins/{}.groovy".format(lab), "w")
         f.write(out)
         f.close()
 
@@ -587,27 +587,25 @@ class Manager():
     # Returns:
     #   unique id for the commit pre/at the deadline.
     def get_repo_by_deadline(self, team, lab):
-        deadline = datetime.strptime(self.get_deadline(lab), "%Y-%m-%d %H:%M:%S")
+        deadline = parse_date(self.get_deadline(lab))
         correction = timedelta(hours=6)
         deadline = deadline + correction
 
-        commits = self.get_commits(team, lab)           
-        commit = commits[-1]
-        max_date = datetime.strptime(str(commit.commit.author.date), "%Y-%m-%d %H:%M:%S")
-        assert(max_date < deadline)
+        print("Getting the list of commits for {}.".format(self.gen_repo_name(lab, team)))
+        commits = self.get_commits(team, lab)
 
-        for c in commits:
-            date = datetime.strptime(str(c.commit.author.date), "%Y-%m-%d %H:%M:%S")
+        # TODO: FIGURE OUT A FASTER WAY TO DO THIS.  STILL SLOW.
+        print("Parsing the commits.")
+        commits = [(parse_date(str(commit.commit.author.date)),
+                    commit.commit.sha)
+                    for commit in commits]
+        
+        print("Sorting the commits.")
+        commits = sorted(commits, key=lambda commit: commit[0], reverse=True)
+        for commit in commits:
+            if commit[0] <= deadline:
+                return commit[1]        # At the very least, the first commit will be before the deadline.
 
-            if date <= deadline and date > max_date:
-                commit = c
-                max_date = datetime.strptime(str(commit.commit.author.date), "%Y-%m-%d %H:%M:%S")
-            else:
-                pass
-            if date > deadline:
-                return commit.commit.sha
-
-        return commit.commit.sha
 
     # HOUSEKEEPING METHODS
     #----------------------------------------------------------------------------------
@@ -705,5 +703,7 @@ class Manager():
         repos = json.dump(urls, f)
         f.close()
 
+def parse_date(date):
+    return datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
 

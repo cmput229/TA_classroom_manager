@@ -34,7 +34,7 @@ echo "Changing lab assignment & distributing."
 read -p "Press ENTER to change to lab1 and collect."
 clear
 
-echo "Collecting repos."
+echo "Changing lab and collecting repos."
 ./main.py -R lab1
 ./main.py -f
 read -p "Press ENTER to clear out and finish the demo."

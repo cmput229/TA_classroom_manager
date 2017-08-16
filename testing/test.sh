@@ -2,43 +2,39 @@
 
 echo "Setting virtualenv"
 source venv/bin/activate
-
-clear
+echo "--------------------------------------------------"
 echo "Clearing organization."
 ./main.py -Q
-read -p "Press a key to begin the demo."
-clear
-
+echo ""
+echo "--------------------------------------------------"
 echo "Clearing defaults."
 ./main.py -O -R -A -S -D
-read -p "Press a key to set defaults."
-clear
-
+echo ""
+echo "--------------------------------------------------"
 echo "Setting defaults."
 ./main.py -O GitHubClassroomTestCMPUT229 -R lab1 -A -S e337d4be.ngrok.io -D
-read -p "Press a key to assign teams."
-clear
-
+echo ""
+echo "--------------------------------------------------"
 echo "Assigning teams."
 ./main.py -t
-read -p "Press a key to assign repos."
-clear
-
+echo ""
+echo "--------------------------------------------------"
 echo "Assigning repos."
 ./main.py -d
-read -p "Press a key to change lab."
-clear
-
+echo ""
+echo "--------------------------------------------------"
 echo "Changing lab assignment & distributing."
 ./main.py -R lab3 -d
-read -p "Press a key to change to lab1 and collect."
-clear
-
-echo "Collecting repos."
+echo ""
+echo "--------------------------------------------------"
+echo "Changing lab and collecting repos."
 ./main.py -R lab1
 ./main.py -f
-read -p "Press a key to finish the demo."
-clear
-
+echo ""
+echo "--------------------------------------------------"
+echo "Clearing defaults."
 ./main.py -Q
 ./main.py -O -R -A -S -D
+echo ""
+echo "--------------------------------------------------"
+echo ""
