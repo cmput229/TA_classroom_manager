@@ -546,6 +546,9 @@ class Manager():
         urls = self.load_repos()
         log2email = load_log_to_email()
 
+        f = open("./gmail/emails.json", "w")
+        emails = []
+
         for team in teams:
             repos = [t.name for t in team.get_repos()]
             notify_repo = self.gen_repo_name(lab, team.name)
@@ -553,13 +556,19 @@ class Manager():
                 for member in team.get_members():
                     contact = log2email[member.login]
                     url = urls[team.name][lab]
-                    try:
-                        notify(contact, team.name, lab, url)
-                        print("{} is notified that {} is distributed.".format(member.login, lab))
-                    except:
-                        print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
+                    msg = "Starter code for {} has been distributed.  You can find this code at {}".format(lab, url)
+                    emails.append({"receiver": contact, "subject": lab, "message": msg})
+                    # try:
+                    #    notify(contact, team.name, lab, url)
+                    #    print("{} is notified that {} is distributed.".format(member.login, lab))
+                    #except:
+                    #    print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
             else:
                 print("ERROR: YOU ARE ATTEMPTING TO NOTIFY {} ABOUT A REPO THEY HAVE NOT BEEN ASSIGNED.".format(team.name))
+        json.dump(emails, f)
+        f.close()
+
+        subprocess.call(["python", "./gmail/draft.py"])
 
     # COLLECTION METHODS
     #----------------------------------------------------------------------------------
