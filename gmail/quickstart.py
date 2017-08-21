@@ -1,3 +1,4 @@
+# https://developers.google.com/gmail/api/quickstart/python
 
 from __future__ import print_function
 import httplib2
@@ -56,18 +57,18 @@ def main():
     of the user's Gmail account.
     """
     credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('gmail', 'v1', http=http)
+    # http = credentials.authorize(httplib2.Http())
+    # service = discovery.build('gmail', 'v1', http=http)
 
-    results = service.users().labels().list(userId='me').execute()
-    labels = results.get('labels', [])
+    # results = service.users().labels().list(userId='me').execute()
+    # labels = results.get('labels', [])
 
-    if not labels:
-        print('No labels found.')
-    else:
-      print('Labels:')
-      for label in labels:
-        print(label['name'])
+    # if not labels:
+    #     print('No labels found.')
+    # else:
+    #   print('Labels:')
+    #   for label in labels:
+    #     print(label['name'])
 
 
 if __name__ == '__main__':

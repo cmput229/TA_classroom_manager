@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 *.token
+client_secret.json
 **/*~
 **/*.pyc
 **/*.pyo
