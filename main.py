@@ -6,6 +6,7 @@ import json
 from utils.classroom_manager import *
 from utils import spimgrader as grader
 import utils.moss
+import utils.graderII as graderII
 
 # flags:  
 def help():  
@@ -238,7 +239,10 @@ def main():
 
     if "-m" in args:
         if m.is_assigned(defs["repo"]):
-            grader.main(defs["repo"])               # Grade with spimgrader
+            if defs["repo"] == "lab1":
+                grader.main(defs["repo"])               # Grade with spimgrader
+            else:
+                graderII.main(defs["repo"])
         else:
             print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
 
