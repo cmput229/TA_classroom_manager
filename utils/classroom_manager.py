@@ -191,14 +191,24 @@ class Manager():
     #   org: PyGitHub organization object
     # Iterates over all teams in the organization & deletes them.
     def del_git_teams(self):
-        teams = self.org.get_teams()
+        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        log2email = load_log_to_email()
+        f = open("./gmail/emails.json", "w")
+        emails = []
+
         for team in teams:
-            if team.name != "Students":
-                members = team.get_members()
-                for member in members:
-                    team.remove_from_members(member)
-                print "Deleting team " + team.name
-                team.delete()
+            members = team.get_members()
+            for member in members:
+                contact = log2email[member.login]
+                msg = "You have been removed from {}.".format(team.name)
+                emails.append({"receiver": contact, "subject": team.name, "message": msg})
+                team.remove_from_members(member)
+            print "Deleting team " + team.name
+            team.delete()
+
+        json.dump(emails, f)
+        f.close()
+        subprocess.call(["python", "./gmail/draft.py"])
 
     # Param:
     #   team: name of a team on GitHub
@@ -459,12 +469,27 @@ class Manager():
     #   Iterates over all repos for all teams in the organization and 
     #   deletes each team's repo for a given lab.
     def del_git_repos(self):
-        teams = self.org.get_teams()
+        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        log2email = load_log_to_email()
+        f = open("./gmail/emails.json", "w")
+        emails = []
+
         for team in teams:
             repos = team.get_repos()
             for repo in repos:
-                print "Deleting repo " + repo.name
+                name = repo.name
+                print "Deleting repo " + name
                 repo.delete()
+                for member in team.get_members():
+                    contact = log2email[member.login]
+                    msg = "Your team's repo for {} has been removed.".format(name)
+                    emails.append({"receiver": contact, "subject": name, "message": msg})
+
+        json.dump(emails, f)
+        f.close()
+        subprocess.call(["python", "./gmail/draft.py"])
+
+        
 
 
     # WEBHOOKS METHODS
@@ -546,6 +571,9 @@ class Manager():
         urls = self.load_repos()
         log2email = load_log_to_email()
 
+        f = open("./gmail/emails.json", "w")
+        emails = []
+
         for team in teams:
             repos = [t.name for t in team.get_repos()]
             notify_repo = self.gen_repo_name(lab, team.name)
@@ -553,13 +581,19 @@ class Manager():
                 for member in team.get_members():
                     contact = log2email[member.login]
                     url = urls[team.name][lab]
-                    try:
-                        notify(contact, team.name, lab, url)
-                        print("{} is notified that {} is distributed.".format(member.login, lab))
-                    except:
-                        print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
+                    msg = "Starter code for {} has been distributed.  You can find this code at {}".format(lab, url)
+                    emails.append({"receiver": contact, "subject": lab, "message": msg})
+                    # try:
+                    #    notify(contact, team.name, lab, url)
+                    #    print("{} is notified that {} is distributed.".format(member.login, lab))
+                    #except:
+                    #    print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
             else:
                 print("ERROR: YOU ARE ATTEMPTING TO NOTIFY {} ABOUT A REPO THEY HAVE NOT BEEN ASSIGNED.".format(team.name))
+        json.dump(emails, f)
+        f.close()
+
+        subprocess.call(["python", "./gmail/draft.py"])
 
     # COLLECTION METHODS
     #----------------------------------------------------------------------------------

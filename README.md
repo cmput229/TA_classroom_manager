@@ -15,10 +15,14 @@ This set of tools can be used to:
 In order to run setup.sh, you will require Virtualenv to be installed.
 * [virtualenv](https://virtualenv.pypa.io/en/stable/)  
 
-
-The module responsible for gathering usernames requires npm and nodejs-legacy to be installed.
+The module responsible for gathering usernames requires npm and nodejs-legacy to be installed.  
+(This will be handled automatically by ./setup.sh)  
 * [npm](https://www.npmjs.com/)
 * [node](https://nodejs.org/en/)
+
+To use gmail to send notifications, the Google Client Library needs to be installed in ./gmail/.  
+(This will be handled automatically by ./setup.sh)  
+* [gmail API quickstart](https://developers.google.com/gmail/api/quickstart/python)  
 
 This toolset uses these Python Modules at these versions:  
 * GitPython, version 2.1.3
