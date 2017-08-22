@@ -1,0 +1,33 @@
+	CMPUT 229 Laboratory Assignment #3 FindLive Lab
+	      ==================================
+
+Final Mark:           /100 MARKS TOTAL
+
+Part 1:         _____ /90 Testing
+
+Part 2:		_____ /10 Style
+
+-------------------------------------------------------------------------
+Part 1: findLive 
+
+ _____ /90
+
+	_____ (a.s) /10  _____ (b.s) /10  ____ (c.s) /10 
+
+	_____ (d.s) /10  _____ (e.s) /10  ____ (f.s) /10
+
+	_____ (g.s) /10  _____ (h.s) /10  ____ (i.s) /10  
+
+
+------------------------------------------------------------------------
+Part 2: Style
+
+ _____ /10
+
+	overall style _____ /10 
+                
+10 marks are reserved for overall style. Some common deductions will include: (5 marks per deduction)
+   No subroutine description
+   No program header
+   No explanation for register usage
+   No block comments

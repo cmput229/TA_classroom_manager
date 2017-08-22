@@ -1,0 +1,30 @@
+################################
+#TESTCASE GENERATION
+################################
+Generated tests should go in the tests directory. The tests folder should be located in the same directory as your solution.
+
+1. Write your program into a .s file in "bare" MIPS assembly with the following restrictions:
+   - This program should not contain any pseudo instruction (a good way to obtain such a program is to cut and paste the assembly of you MIPS code as displayed by XSPIM). 
+
+2. Run the following command to generate a .bin file (assuming that your .s file is called "example.s":
+
+   expect assemble.exp example.s example.bin | sed '1,7d' | sed '2d'
+
+
+   - To generate the .bin for several tests (these should be in the directory tests) you can execute the script
+
+   ./compileTests.sh
+
+################################
+#RUNNING YOUR SUBMISSION
+################################
+
+To generate the output for a single test:
+
+   ./runTest.sh YOURLABFILE TESTFILE
+
+To generate the output for all tests in the tests directory:
+
+   ./runAllTests.sh YOURLABFILE
+
+Timeouts are currently set to 1s and are set in the runTest script. This can be changed at a later date if need be.

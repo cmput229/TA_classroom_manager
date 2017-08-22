@@ -1,0 +1,17 @@
+#!/usr/bin/expect
+set input [lindex $argv 0]
+set output [lindex $argv 1]
+spawn spim -bare
+
+# Load it
+expect "(spim)"
+send "load \"$input\"\r"
+
+#Dump it
+expect "(spim)"
+send "dumpnative \"$output\"\r"
+
+#Die
+expect "(spim)"
+
+exit 0

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if ! [ -e git.token ]
+    then
+        echo "Please provide a git.token."
+        exit
+fi
+
 echo "Setting virtualenv"
 source venv/bin/activate
 echo "--------------------------------------------------"
@@ -43,7 +49,8 @@ echo "Changing lab and collecting repos."
 echo "--------------------------------------------------"
 echo ""
 ./testing/lab1/demo.sh
-read -p "Pausing\n" -t 5
+read -p "Pausing" -t 5
+echo ""
 ./main.py -R lab1
 ./main.py -f
 echo ""

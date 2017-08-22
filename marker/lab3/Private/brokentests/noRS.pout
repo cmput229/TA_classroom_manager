@@ -1,0 +1,57 @@
+a : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $s0  				      |	The live registers: 
+=============================================================================================================================
+b : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $t0  				      |	The live registers: 
+The live registers: $s0  				      |	The live registers: 
+=============================================================================================================================
+c : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $t0  $t1  $s1  $s7  		      <
+The live registers: $s7  				      (
+The live registers: $t6  				      |	The live registers: $s7  
+							      >	The live registers: 
+=============================================================================================================================
+d : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $t1  $t3  $s5  			      |	The live registers: $t1  
+The live registers: 					      (
+The live registers: 					      (
+=============================================================================================================================
+e : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $t0  $t2  				      |	The live registers: 
+The live registers: $t1  $t2  $s4  $t8  		      |	The live registers: $t2  
+=============================================================================================================================
+f : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $t1  $t5  $s0  $t9  		      |	The live registers: $t1  $s0  $t9  
+The live registers: $t1  $t5  $s0  $t8  $t9  		      |	The live registers: $t1  $s0  $t9  
+The live registers: $t8  				      |	The live registers: 
+=============================================================================================================================

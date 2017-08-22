@@ -1,0 +1,21 @@
+To grade all students solutions at once with a single "push button" simply place all of the student solutions in some directory and run:
+
+   ./gradeAllTestsForAllStudents.sh DIRECTORY_WITH_STUDENTS_SOLUTIONS
+
+To grade a single student solution over all test cases, use:
+
+   ./gradeAllTests.sh <student solution file>
+
+To generate the expected output for all tests in the tests directory, (using the solution):
+
+   ./buildExpectedOutput.sh
+
+
+Guide to the test directory:
+
+Output files that are named as *.outpath are the expected output of the execution path that the program takes while doing its liveness analysis.
+
+Output files that are named as *.out are the expected output of the liveness analysis (the live registers).
+
+
+Timeouts are currently set to 1s and are set in the runTest script. This can be changed at a later date if need be. 

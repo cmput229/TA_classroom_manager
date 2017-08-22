@@ -1,0 +1,15 @@
+a : Pass
+b : Pass
+c : Pass
+d : Pass
+e : Pass
+f : Failed (Diff Below)
+========================= Expected =========================== ========================== Actual ============================
+Copyright 1990-2010, James R. Larus.			      (
+All Rights Reserved.					      (
+See the file README for a full copyright notice.	      (
+Loaded: /usr/lib/spim/exceptions.s			      (
+The live registers: $t1  $t5  $s0  $t9  		      |	The live registers: $t1  $t5  $s0  
+The live registers: $t1  $t5  $s0  $t8  $t9  		      |	The live registers: $t1  $t5  $s0  $t8  
+The live registers: $t8  				      (
+=============================================================================================================================

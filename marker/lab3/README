@@ -1,0 +1,12 @@
+Lab: Find Live
+Author: Kristen Newbury
+Date: June 13 2017
+
+The purpose of this lab is to teach students about register liveness and program control flow. They will use knowledge of instruction parsing to gather the live registers. They will also learn how to calculate targets for both jumps and branches.
+
+Knowledge Required:
+-arrays
+-recursion
+-instruction parsing
+
+

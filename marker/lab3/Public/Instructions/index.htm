@@ -1,0 +1,231 @@
+<!- Adapted from:
+        TEMPLATE
+        Lab_BasicBlocks/Public/Instructions/index.htm
+        Lab_CubeStatsOld/Public/Instructions/index.htm
+
+author: Kristen Newbury June 9 2017
+>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+<head>
+  <title>229 Lab - Find Live</title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+
+<h1>Liveness Analysis</h1>
+
+<h2>Information</h2>
+
+<p>This lab assignment implements a <i>static</i>, <i>flow-sensitive</i>, <i>intra-procedural</i> liveness analysis in order to 
+  gather the live registers at each instruction immediately following a function call. A <i>static</i> analysis only takes into consideration the code of a program, and not the specific data input used to run the program. Therefore a <i>static</i> analysis produces approximate results that are true for all possible executions of a program. A <i>flow-sensitive</i> analysis takes into consideration the flow of control through the program code and is more precise than a <i>flow-insensitive</i> analysis, which approximates the effect of the statements of the program by conceptually putting them in a set and assuming that they could be executed in any order. An <i>intra-procedural</i> analysis only considers the effects of the statements within each procedure of the program and does not propagate information from one procedure to another.
+</p>
+
+<iframe src="../Liveness_Resources/index.html"></iframe>
+
+<h4>Calculating Offsets and Target Addresses</h4>
+<p>
+For both branch and jump instructions you will need the value contained in the <code>PC</code> to calculate the offset or the target address. During program execution the <code>PC</code> contains the memory address of the next instruction to execute. In this lab the representation of the program is located in the user data segment of memory, therefore we can think of the value of the address that you used to load the binary representation of the instruction into a register as the value that the <code>PC</code> normally contains during program execution. In other words, in the following, the PC for the instruction is the value of the pointer that you are using to scan the binary code when you loaded that instruction.
+</p>
+<h4>For branches</h4>
+
+<p>Branches provide offsets rather than target addresses, so you will
+need to do the conversion yourself. The following algorithm is
+recommended to convert branch offsets to addresses:</p>
+
+<ul>
+<li>Extracting the lower 16 bits of a branch instruction will tell 
+you how far away the target is. This value specifies the number of instructions between the branch and the target --- it may be negative.</li>
+<li>Shift it left by two.</li>
+<li>Sign extend it to 32 bits.</li>
+<li>Add it to the <code>PC</code>+4 value.</li>
+</ul>
+
+<h4>For jumps</h4>
+
+<ul>
+<li>When you detect a jump instruction you will take the value
+of the <code>PC</code>+4 and gather the 4 most significant bits. 
+<li>Gather the 26 least significant bits from the jump instruction.</li>
+<li>Shift the 26 least significant bits of the jump instruction left by 2 so that this address will now be word aligned.</li>
+<li>Concatenate the upper 4 significant bits that you gathered from the <code>PC</code> and the left-shifted 26 bits that you have gathered from the instruction.</li> 
+</ul>
+
+<p>It is far more complex to calculate the targets for Register-based jumps executed with the <code>jr</code> instruction. The calculation of such targets generally require a  <a href="http://en.wikipedia.org/wiki/Dynamic_program_analysis">dynamic analysis</a> to compute the value stored in the register at the time of the jump. In many cases this value cannot be determined statically. Thus,
+for this assignment, you will not need to determine the target of
+these jumps. The only register-based jump that you will encounter will be the <code> jr $ra</code> instruction, which
+signifies the end of a function.</p>
+
+<h2>Assignment</h2>
+
+<p>In this assignment you will write a MIPS assembly program
+containing a function called <code>findLive</code> that finds the
+liveness status of all of the registers of interest at program points
+immediately after each function call. The spec for
+<code>findLive</code> is as follows.</p>
+
+<ul>
+  <li>
+    <code>findLive</code>
+    <ul>
+      <li><b>Arguments:</b> <code>$a0</code> contains the address of
+      the first instruction of the binary representation of a valid
+      MIPS program
+
+	<ul>
+	  <li> the end of the program is signaled by the sentinel word <code>0xFFFFFFFF</code>
+	</ul>
+
+      </li>
+
+      <li><b>Return Value:</b> <code>$v0</code> should contain the
+      memory address of the first element of a list of words such
+      that:
+
+	<ul>
+	  <li> each word in the list encodes, in the binary format
+	  specified below, the liveness status of all registers at the
+	  point immediately after a function call;</li>
+
+	  <li> the words in the list are sorted in ascending order of
+	  the address of the corresponding <code>jal</code>
+	  instructions in the code;</li>
+
+	  <li> a sentinel value <code>0xFFFFFFFF</code> signals the end of the list.</li>
+	</ul>
+
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4>Expected Binary Format of Word in Returned List</h4>
+The bits specified below should contain 1 if the corresponding register is live and 0 if the register is dead. The value for the bits listed as NA (Not Applicable) will not be read by the grading script, thus these bits may contain any value.
+ 
+      <style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;}
+.tg .tg-yw4l{vertical-align:top}
+.tg .tg-le8v{background-color:#c0c0c0;vertical-align:top}
+.tg .tg-ds4c{background-color:#000000;color:#ffffff;vertical-align:top}
+</style>
+<table class="tg">
+  <tr>
+    <th class="tg-yw4l">Bit</th>
+    <th class="tg-ds4c">31-26</th>
+    <th class="tg-le8v">25</th>
+    <th class="tg-le8v">24</th>
+    <th class="tg-le8v">23</th>
+    <th class="tg-le8v">22</th>
+    <th class="tg-le8v">21</th>
+    <th class="tg-le8v">20</th>
+    <th class="tg-le8v">19</th>
+    <th class="tg-le8v">18</th>
+    <th class="tg-le8v">17</th>
+    <th class="tg-le8v">16</th>
+    <th class="tg-le8v">15</th>
+    <th class="tg-le8v">14</th>
+    <th class="tg-le8v">13</th>
+    <th class="tg-le8v">12</th>
+    <th class="tg-le8v">11</th>
+    <th class="tg-le8v">10</th>
+    <th class="tg-le8v">9</th>
+    <th class="tg-le8v">8</th>
+    <th class="tg-ds4c">7-0</th>
+  </tr>
+  <tr>
+    <td class="tg-yw4l">Encodes For</td>
+    <td class="tg-ds4c">NA</td>
+    <td class="tg-le8v"><code>$t9</code></td>
+    <td class="tg-le8v"><code>$t8</code></td>
+    <td class="tg-le8v"><code>$s7</code></td>
+    <td class="tg-le8v"><code>$s6</code></td>
+    <td class="tg-le8v"><code>$s5</code></td>
+    <td class="tg-le8v"><code>$s4</code></td>
+    <td class="tg-le8v"><code>$s3</code></td>
+    <td class="tg-le8v"><code>$s2</code></td>
+    <td class="tg-le8v"><code>$s1</code></td>
+    <td class="tg-le8v"><code>$s0</code></td>
+    <td class="tg-le8v"><code>$t7</code></td>
+    <td class="tg-le8v"><code>$t6</code></td>
+    <td class="tg-le8v"><code>$t5</code></td>
+    <td class="tg-le8v"><code>$t4</code></td>
+    <td class="tg-le8v"><code>$t3</code></td>
+    <td class="tg-le8v"><code>$t2</code></td>
+    <td class="tg-le8v"><code>$t1</code></td>
+    <td class="tg-le8v"><code>$t0</code></td>
+    <td class="tg-ds4c">NA</td>
+  </tr>
+</table>
+
+<h3>Invariants </h3> 
+<p> You can assume that the following will always be true:  </p>
+<ul>
+<li>Each function is laid out in the memory between a <code>StartAddress</code> and an <code>EndAddress</code>.</li> 
+<li>The first instruction of the function is at <code>StartAddress</code>.</li>
+<li>Each function contains a single <code>jr $ra</code> instruction which appears at the <code>EndAddress</code>.</li> 
+<li>Every memory word between <code>StartAddress</code> and <code>EndAddress</code> is a valid MIPS instruction.</li>
+<li>The input program will never contain more than 10 function calls and 10 functions.</li>
+<li>There will never be a function containing more than 100 instructions.</li>
+</ul>
+
+<h2>Hints</h2>
+<p>These hints are here to help you. There are other ways to implement solutions to this lab.  The provided algorithm and suggested data structures are meant as a guideline. </p>
+<ul>
+<li>Most of the above invariants were created to limit the size of testable input files. These invariants allow for static allocation of memory to store all of the data that is needed by the algorithm. </li>
+<li>The live registers list returned by <code>findLive</code> should only contain register values that specify <code>$s</code> or <code>$t</code> registers.</li>
+<li>It may be useful for you to visually inspect your instructions seen path once you think you have gotten the control flow aspect of this assignment completed.
+We have provided a (<a href="../TestCaseGeneration_Public/binDecompiler.py">decompiler</a>) that is able to convert both binary-format instructions (as found in a .bin file) and 
+decimal-format instructions (as printed to standard output using a syscall) into human readable MIPS code, see the
+comments in the file for more instructions on sample usage. 
+ </li>
+ </ul>
+
+<h2>Resources</h2>
+
+<p> A suggested algorithm for traversing program to find relevant paths for live registers: (<a href="../../../Liveness_Resources/livenessAlgorithm.txt">Liveness algorithm</a>). See the following sets of slides for important notes and further breakdown of the algorithm.</p>
+<p> Slides used for in-class introduction of the lab: (<a href="../Slides/Lab_FindLive_Class_pres.pptx">.ppt</a>)(<a href="../Slides/Lab_FindLive_Class_pres.pdf">.pdf</a>)</p>
+<p> Slides used for in-lab introduction of the lab: (<a href="../Slides/Lab_FindLive_Lab_pres.pptx">.ppt</a>) (<a href="../Slides/Lab_FindLive_Lab_pres.pdf">.pdf</a>)</p>
+<p> Here is a <a href="../TestCaseGeneration_Public">set of scripts</a> that you can use to generate a new test case. Follow the instructions in the <a href="../TestCaseGeneration_Public/README">README</a> file.
+<p> To generate a new test case you have to:
+<ul>
+  <li> ensure that your test case has no pseudo instructions because the test case generation uses a "bare" SPIM that cannot handle pseudo instructions.
+  <li> generate a <code>.bin</code> file using the procedure described in the
+<a href="../TestCaseGeneration_Public/README">README</a> (the machine where you are generating the <code>.bin</code> file must have the program <code>expect</code> installed, which is used by the file <code>assemble.exp</code>)
+    <ul>
+      <li> In a linux system you can use the command <code>which</code> to find out, simply type:
+	<pre>
+	  which expect
+	</pre>
+	in the command line.</li>
+    </ul>
+</ul>
+<p>This set of scripts must also be used to run your file. 
+The <code>runTest</code> script combines your submission file and the code that we provide to you 
+to call your functions. Use this file as specified in the <a href="../TestCaseGeneration_Public/README">README</a> to run your solution.
+</p>
+
+<p>Note: Another good resource is the data reference sheet in the textbook, if contains all of the formats for the instructions as well as the formats for I and R type instructions. <p>
+
+<h2>Marking Guide</h2>
+<p>
+Here is a general idea of how the lab will be marked, specifics to
+be discussed.
+</p>
+<p>
+      <ul>
+            <li>10% For code cleanliness, readability, and comments</li>
+            <li>90% For proper liveness detection.</li>
+      </ul>
+A copy of the marksheet to be used can be found 
+<a href="../TestCaseGeneration_Public/MarksheetPub.txt">here.</a>
+</p>
+<h2>Submission</h2>
+<p>
+There is a single file to be submitted for this lab. The file name should be <code>lab3FindLive.s</code> 
+and it should contain only the code for the function specified above. Make sure to not include a main 
+function in your solution. Use the link provided in the course page for submission.
+</p>
+</body>
