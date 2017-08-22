@@ -36,7 +36,47 @@ def grade(path):
     subprocess.call(["bash",
                      "./gradeAllTestsForAllStudents.sh", 
                      "./gathered"])
+    os.chdir("../../../../")
+
+# After grading, the results are found in ./marker/<lab>/Private/Marking/gathered/<team>.out
+# Each line is the result of a test, and takes the form <letter> : <result>
+# Consolidate these into a .csv file in ./marker/results/<lab>/, taking the form
+# <team_name>,<ratio>,<list_of_cases_wrong>
+def consolidate(lab, path):
+    if not os.path.isdir("./marker/summary/"):
+        os.mkdir("./marker/summary/")
+
+    outfile = open("./marker/summary/{}.csv".format(lab), "w")
+
+    files = [f for f in os.listdir("{}gathered".format(path)) if f[-4:] == ".out"]
+    
+    for f in files:
+        fin = open("{}gathered/{}".format(path, f), "r")
+        lines = fin.readlines()
+        total = len(lines)
+        count = 0
+        missed = []
+        for line in lines:
+            case, result = line.split(":")
+            print case, result
+            if result.strip() == "Failed":
+                missed.append(case)
+            else:
+                count += 1
+        print missed
+        summary = "{},{},{}\n".format(f, "{}/{}".format(count, total), str(missed))
+        outfile.write(summary)
+
+    outfile.close()
+
+def main(lab):
+    path = gather_for_marking(lab)
+    grade(path)
+    consolidate(lab, path)
 
 if __name__ == "__main__":
-    path = gather_for_marking("lab3")
+    lab = "lab3"
+    path = gather_for_marking(lab)
     grade(path)
+    consolidate(lab, path)
+
