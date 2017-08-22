@@ -51,6 +51,10 @@ echo ""
 ./testing/lab1/demo.sh
 read -p "Pausing" -t 5
 echo ""
+./testing/lab3/demo.sh
+read -p "Pausing" -t 5
+echo ""
+./main.py -f
 ./main.py -R lab1
 ./main.py -f
 echo ""

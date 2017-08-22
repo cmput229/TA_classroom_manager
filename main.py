@@ -219,7 +219,10 @@ def main():
             a = defs["archives"]
 
             m.get_repos(r)
-            grader.main(r)
+            if r == "lab1":
+                grader.main(r)               # Grade with spimgrader
+            else:
+                graderII.main(r)
             moss.submit(r, archives=a)
         else:
             print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
