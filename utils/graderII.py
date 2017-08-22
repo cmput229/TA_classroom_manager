@@ -58,12 +58,10 @@ def consolidate(lab, path):
         missed = []
         for line in lines:
             case, result = line.split(":")
-            print case, result
             if result.strip() == "Failed":
                 missed.append(case)
             else:
                 count += 1
-        print missed
         summary = "{},{},{}\n".format(f, "{}/{}".format(count, total), str(missed))
         outfile.write(summary)
 
