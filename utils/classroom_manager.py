@@ -436,8 +436,8 @@ class Manager():
     def get_repos(self, lab):
         print "Getting repos from GitHub."
         teams = self.get_git_teams()
-        teams = [team.name for team in teams]
-        teams.remove("Students")
+        teams = [team.name for team in teams in "team" in team.name]
+        # teams.remove("Students")
         if not os.path.isdir("./submissions/"):
             os.mkdir("./submissions/")
 
@@ -571,7 +571,7 @@ class Manager():
     #   to iterate over all students by team in order to notify them
     #   that the lab has been assigned.
     def notify_all(self, lab):
-        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        teams = [team for team in self.org.get_teams() if "team" in team.name]
         urls = self.load_repos()
         log2email = load_log_to_email()
 
