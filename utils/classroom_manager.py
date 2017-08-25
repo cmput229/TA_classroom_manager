@@ -14,6 +14,7 @@ import subprocess
 import spimgrader as grader
 import moss
 from notifier import send_notification as notify
+import fileIO
 
 
 # REFERENCE
@@ -82,7 +83,6 @@ from notifier import send_notification as notify
 #   -------------------------
 #   - gen_repo_name
 #   - get_server
-#   - get_token
 #   - json_to_csv
 #   - git_to_csv
 #   - remove_local
@@ -94,7 +94,7 @@ class Manager():
     def __init__(self, name):
         self.name = name
         self.url = "https://github.com/{}/".format(name)
-        token = self.get_token()
+        token = fileIO.read_token()
         self.hub = Github(token)        
         self.org = self.hub.get_organization(name)
 
@@ -107,9 +107,7 @@ class Manager():
     # N.B.: class.txt is a text file with student gitIDs on each line
     # TODO: REMOVE THIS?  NOT USED.  ASSUME STUDENTS MUST JOIN ORGANIZATION?
     def set_members(self):
-        class_list = open("./config/class.txt", "r")
-        c = [line.strip() for line in c]
-        class_list.close()
+        c = fileIO.read_classlist()
 
         for student in c:
             self.org.add_to_public_members(self.hub.get_user(student))
@@ -124,68 +122,27 @@ class Manager():
     # class.txt is a text file with student gitIDs on each line
     # teams.txt is a text file that identifies which student gitIDs are proposed
     # to be group members.  Groups should be in csv format.
-    @staticmethod
-    def set_teams():
+    def initialize_git_teams(self):
         print "Parsing class & team files."
         teams = {}
 
-        class_list = open("./config/users.csv", "r")
-        c = class_list.read()
-        c = c.strip().split(",")
-        class_list.close()
+        c = fileIO.read_classlist()
+        t = fileIO.read_teamslist()
+        max_team = get_max_team(self.org)
 
-        teams_list = open("./config/teams.csv", "r")
-        t = [line.strip().split(",") for line in teams_list.readlines()]
-        teams_list.close()
-
-        i = 0
         for team in t:
-            team_name = "team" + str(i)
-            teams[team_name] = team
-            i += 1
+            teams[max_team] = team
+            max_team = "team{}".format(int(max_team[4:]) + 1)
             for member in team:
                 if member in c:
                     c.remove(member)
 
         for line in c:
             line = line.strip()
-            team_name = "team" + str(i)
-            teams[team_name] = [line]
-            i += 1
-        print teams
-        out = open("./config/team_defs.json", "w")
-        json.dump(teams, out)
-        out.close()
+            teams[max_team] = [line]
+            max_team = "team{}".format(int(max_team[4:]) + 1)
 
-    # Params:
-    #   hub: PyGitHub github object
-    #   org: PyGitHub organization object
-    # Purpose:
-    #   To iterate over all the teams defined locally with team_defs.json
-    #   and create teams on GitHub.
-    def set_git_teams(self):
-        print "Setting teams on GitHub."
-
-        f = open("./config/team_defs.json", "r")
-        teams = json.load(f)
-        f.close()
-
-        for team in teams.keys():
-            t = None
-            try:
-                t = self.org.create_team(team)
-                print "Created " + team + " on GitHub."
-            except:
-                print "Error creating team: team {} already exists.".format(team)
-            else:
-                for member in teams[team]:
-                    t.add_to_members(self.hub.get_user(member))
-    
-    # Purpose:
-    #   Gets the PyGitHub teams
-    def get_git_teams(self):
-        results = [team for team in self.org.get_teams()]
-        return results
+        fileIO.dump_teamslist(teams)
 
     # Takes an updated version of the class list as if from LDAP
     # Looks-up usernames of students that have dropped, and removes them from the class.
@@ -194,21 +151,18 @@ class Manager():
     # ASSUMPTION:
     # users.txt is the current snapshot of the class
     def update_git_teams(self):
-        git_teams = [team for team in self.get_git_teams() if "team" in team.name]
+        git_teams = get_remote_teams(self.org)
         current_class = []
         membership = {}
         for team in git_teams:
             for member in team.get_members():
                 current_class.append(member.login)
                 membership[member.login] = team
-                
         self.get_usernames()
-        fin = open("./config/users.json", "r")
-        updated_class = json.load(fin)
 
-        if current_class == updated_class:
-            return
-        else:
+        updated_class = fileIO.load_classlist()
+
+        if current_class != updated_class:
             for member in updated_class:
                 if member not in current_class:
                     team_name = self.get_new_team()
@@ -225,15 +179,33 @@ class Manager():
                 if member not in updated_class:
                     team = membership[member]
                     self.del_members(team.name, [member])
-                        
+
+    # Params:
+    #   hub: PyGitHub github object
+    #   org: PyGitHub organization object
+    # Purpose:
+    #   To iterate over all the teams defined locally with team_defs.json
+    #   and create teams on GitHub.
+    def set_git_teams(self):
+        print "Setting teams on GitHub."
+
+        local_teams = fileIO.load_teamslist()
+        remote_teams = get_remote_team_names(self.org)
+        
+        for team_name in local_teams.keys():
+            if team_name not in remote_teams:
+                t = self.org.create_team(team_name)
+                for member in local_teams[team_name]:
+                    t.add_to_members(self.hub.get_user(member))
+            else:
+                print "{} already exists.".format(team_name)
 
     # Param:
     #   org: PyGitHub organization object
     # Iterates over all teams in the organization & deletes them.
     def del_git_teams(self):
-        teams = [team for team in self.org.get_teams() if "team" in team.name]
-        log2email = load_log_to_email()
-        f = open("./gmail/emails.json", "w")
+        teams = get_remote_teams(self.org)
+        log2email = fileIO.load_login_to_email()
         emails = []
 
         for team in teams:
@@ -246,8 +218,7 @@ class Manager():
             print "Deleting team " + team.name
             team.delete()
 
-        json.dump(emails, f)
-        f.close()
+        fileIO.dump_emails(emails)
         subprocess.call(["python", "./gmail/draft.py"])
 
     # Param:
@@ -311,25 +282,24 @@ class Manager():
             authors = [c.author.login for c in remote.get_commits()]
             login_to_email = {authors[i]: emails[i] for i in range(len(authors))}
 
-            f = open("./config/log_to_email.json", "w")
-            f.write(json.dumps(login_to_email))
-            f.close()
-            f = open("./config/users.csv", "w")
-            f.write(",".join(authors))
-            f.close()
-            f = open("./config/users.json", "w")
-            f.write(json.dumps(authors))
-            f.close()
+            fileIO.dump_login_to_email(login_to_email)
+            fileIO.write_classlist(authors)
+            fileIO.dump_classlist(authors)
 
             print("Github usernames written to ./config/users.csv and ./config/users.json")
             print("JSON to match usernames to email accounts written to ./config/log_to_email.json")
         except:
             print("WARNING: GITHUB USERNAMES NOT WRITTEN.")
+
         try:
             remote.delete()
             shutil.rmtree("./tmp/")
             print("Working directory clean.")
         except:
+            try:    
+                self.org.get_repo("usernames").delete()
+            except:
+                pass
             print("WARNING: ./tmp/ REMAINS IN FILETREE.")
 
     # DISTRIBUTION METHODS
@@ -342,7 +312,6 @@ class Manager():
     def is_assigned(self, lab):
         repos = [r.name for r in self.org.get_repos() if lab in r.name and r.name != lab and "team" in r.name]
         return repos != []
-        
 
     # Assumes that the url for the lab's repo within the organization matches the repo name
     def set_base(self, lab):
@@ -389,7 +358,7 @@ class Manager():
     # Return:
     #   GitPython Repo object
     def local_clone(self, lab):
-        token = self.get_token()
+        token = fileIO.read_token()
         url = self.url+lab
         if os.path.exists("./base/"):
             shutil.rmtree("./base/")
@@ -473,7 +442,7 @@ class Manager():
     #   Used to get local copies to submit to moss
     def get_repos(self, lab):
         print "Getting repos from GitHub."
-        teams = self.get_git_teams()
+        teams = get_remote_teams(self.org)
         teams = [team.name for team in teams in "team" in team.name]
         # teams.remove("Students")
         if not os.path.isdir("./submissions/"):
@@ -512,8 +481,7 @@ class Manager():
     #   deletes each team's repo for a given lab.
     def del_git_repos(self):
         teams = [team for team in self.org.get_teams() if "team" in team.name]
-        log2email = load_log_to_email()
-        f = open("./gmail/emails.json", "w")
+        log2email = fileIO.load_login_to_email()
         emails = []
 
         for team in teams:
@@ -527,12 +495,8 @@ class Manager():
                     msg = "Your team's repo for {} has been removed.".format(name)
                     emails.append({"receiver": contact, "subject": name, "message": msg})
 
-        json.dump(emails, f)
-        f.close()
+        fileIO.dump_emails(emails)
         subprocess.call(["python", "./gmail/draft.py"])
-
-        
-
 
     # WEBHOOKS METHODS
     #----------------------------------------------------------------------------------
@@ -611,9 +575,8 @@ class Manager():
     def notify_all(self, lab):
         teams = [team for team in self.org.get_teams() if "team" in team.name]
         urls = self.load_repos()
-        log2email = load_log_to_email()
+        log2email = fileIO.load_login_to_email()
 
-        f = open("./gmail/emails.json", "w")
         emails = []
 
         for team in teams:
@@ -632,9 +595,8 @@ class Manager():
                     #    print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
             else:
                 print("ERROR: YOU ARE ATTEMPTING TO NOTIFY {} ABOUT A REPO THEY HAVE NOT BEEN ASSIGNED.".format(team.name))
-        json.dump(emails, f)
-        f.close()
 
+        fileIO.dump_emails(emails)
         subprocess.call(["python", "./gmail/draft.py"])
 
     # COLLECTION METHODS
@@ -659,12 +621,7 @@ class Manager():
     # Returns:
     #   String Date in the format %Y-%m-%d %H:%M:%S
     def get_deadline(self, lab):
-        deadlines_file = open("./config/deadlines.csv", "r")
-        d = deadlines_file.readlines()
-        deadlines_file.close()
-
-        if "\n" in d:
-            d.remove("\n")
+        d = fileIO.read_deadlines()
 
         deadlines = {}
         for line in d:
@@ -706,40 +663,21 @@ class Manager():
     # HOUSEKEEPING METHODS
     #----------------------------------------------------------------------------------
 
-    def get_new_team(self):
-        teams = [int(team.name[4:]) for team in self.org.get_teams() if "team" in team.name]
-        teams.sort()
-        return "team{}".format(int(teams[-1]) + 1)
+
 
     # Purpose:
     #   Generate a repo name given a team name and a lab/assignment name
     #   to reduce floating magic strings
     def gen_repo_name(self, lab, team):
-        f = open("./config/defaults.json", "r")
-        defaults = json.load(f)
-        f.close()
+        defaults = fileIO.load_defaults()
         if "prefix" in defaults and defaults["prefix"] != "":
             return "{}_{}_{}".format(defaults["prefix"], team, lab)
         else:
             return "{}_{}".format(team, lab)
 
     def get_server(self):
-        f = open("./config/defaults.json", "r")
-        defaults = json.load(f)
-        f.close()
+        defaults = fileIO.load_defaults()
         return defaults["server"]
-
-    # Purpose:
-    #   Reads git.token to get the oauth token that allows PyGithub and GitPython 
-    #   to perform their actions.
-    def get_token(self):
-        try:
-            f = open("git.token", "r")
-            token = f.readline().strip()
-            return token
-        except:
-            print("Error reading git.token.  Ensure that you have an OAuth token in git.token.")
-            return None
 
     # Purpose:
     #   Write the team defs as csv
@@ -760,7 +698,7 @@ class Manager():
     #   Format: <team>,<member>\n
     def git_to_csv(self):
         out = open("./config/team_defs.csv", "w")
-        teams = self.get_git_teams()
+        teams = get_remote_teams(self.org)
         for team in teams:
             members = [m for m in team.get_members()]
             for member in members:
@@ -781,7 +719,7 @@ class Manager():
     # Returns:
     #   The url, but with oauth token inserted
     def insert_auth(self, url):
-        token = self.get_token()
+        token = fileIO.read_token()
         url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
         return url
 
@@ -807,15 +745,6 @@ class Manager():
 def parse_date(date):
     return datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
-def load_log_to_email():
-    try:
-        f = open("./config/log_to_email.json", "r")
-        log2email = json.load(f)
-        f.close()
-        return log2email
-    except:
-        return {}
-
 def save_max_team(number):
     f = open("./config/max_team.txt", "w")
     f.write(number)
@@ -833,4 +762,18 @@ def get_assigned_repos():
     f.close
     return repos
 
+# GitHub IO Functions
+def get_remote_teams(org):
+    return [team for team in org.get_teams() if "team" in team.name]
+
+def get_remote_team_names(org):
+    return [team.name for team in org.get_teams() if "team" in team.name]
+
+def get_max_team(org):
+    teams = [int(team.name[4:]) for team in org.get_teams() if "team" in team.name]
+    if teams == []:
+        return "team0"
+    else:
+        teams.sort()
+        return "team{}".format(int(teams[-1]) + 1)
 
