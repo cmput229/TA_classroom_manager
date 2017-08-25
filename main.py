@@ -179,6 +179,7 @@ def main():
         m.get_usernames()
 
     if "-t" in args:
+        m.get_usernames()
         m.set_teams()                           # local
         m.set_git_teams()                       # remote
         m.git_to_csv()                          # setup csv for teams

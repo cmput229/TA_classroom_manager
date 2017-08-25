@@ -129,7 +129,7 @@ class Manager():
         print "Parsing class & team files."
         teams = {}
 
-        class_list = open("./config/class.csv", "r")
+        class_list = open("./config/users.csv", "r")
         c = class_list.read()
         c = c.strip().split(",")
         class_list.close()
@@ -152,7 +152,7 @@ class Manager():
             team_name = "team" + str(i)
             teams[team_name] = [line]
             i += 1
-
+        print teams
         out = open("./config/team_defs.json", "w")
         json.dump(teams, out)
         out.close()
@@ -161,7 +161,7 @@ class Manager():
     #   hub: PyGitHub github object
     #   org: PyGitHub organization object
     # Purpose:
-    #   To iterate over all the teams defined locally with ten_defs.json
+    #   To iterate over all the teams defined locally with team_defs.json
     #   and create teams on GitHub.
     def set_git_teams(self):
         print "Setting teams on GitHub."
@@ -191,7 +191,7 @@ class Manager():
     #   org: PyGitHub organization object
     # Iterates over all teams in the organization & deletes them.
     def del_git_teams(self):
-        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        teams = [team for team in self.org.get_teams() if "team" in team.name]
         log2email = load_log_to_email()
         f = open("./gmail/emails.json", "w")
         emails = []
@@ -332,7 +332,11 @@ class Manager():
     def remote_clone(self, lab, team, base_repo):
         base_url = self.url+lab
         repo_name = self.gen_repo_name(lab, team.name)
-        team_repo = self.org.create_repo(repo_name, team_id=team)
+        team_repo = None
+        try:
+            team_repo = self.org.create_repo(repo_name, team_id=team, private=True)
+        except:
+            team_repo = self.org.create_repo(repo_name, team_id=team)
         repo_url = self.url + repo_name
         remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
         remote.push(refspec="{}:{}".format("master", "master"))
@@ -354,7 +358,7 @@ class Manager():
 
     def assign_repos(self, lab, base):
         teams = self.org.get_teams()
-        teams = [team for team in teams if team.name != "Students"]
+        teams = [team for team in teams if "team" in team.name]
         urls = self.load_repos()
         for team in teams:
             repos = team.get_repos()
@@ -394,7 +398,7 @@ class Manager():
     #   To iterate over all the teams for the CMPUT229 GitHub organization and
     #   assign each team a clone of the repo containing the base code.
     def set_repos(self, lab):
-        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        teams = [team for team in self.org.get_teams() if "team" in team.name]
         
         if teams == []:
             print "ERROR: You need to set teams (-t) before distributing repos to them!"
@@ -469,7 +473,7 @@ class Manager():
     #   Iterates over all repos for all teams in the organization and 
     #   deletes each team's repo for a given lab.
     def del_git_repos(self):
-        teams = [team for team in self.org.get_teams() if team.name != "Students"]
+        teams = [team for team in self.org.get_teams() if "team" in team.name]
         log2email = load_log_to_email()
         f = open("./gmail/emails.json", "w")
         emails = []
