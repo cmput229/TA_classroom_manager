@@ -187,6 +187,46 @@ class Manager():
         results = [team for team in self.org.get_teams()]
         return results
 
+    # Takes an updated version of the class list as if from LDAP
+    # Looks-up usernames of students that have dropped, and removes them from the class.
+    # Looks-up usernames of students that have joined the class, and adds them to the teams appropriate.
+    # Distributes any repos that have been already distributed to the new students.
+    # ASSUMPTION:
+    # users.txt is the current snapshot of the class
+    def update_git_teams(self):
+        git_teams = [team for team in self.get_git_teams() if "team" in team.name]
+        current_class = []
+        membership = {}
+        for team in git_teams:
+            for member in team.get_members():
+                current_class.append(member.login)
+                membership[member.login] = team
+                
+        self.get_usernames()
+        fin = open("./config/users.json", "r")
+        updated_class = json.load(fin)
+
+        if current_class == updated_class:
+            return
+        else:
+            for member in updated_class:
+                if member not in current_class:
+                    team_name = self.get_new_team()
+                    team = self.org.create_team(team_name)
+                    team.add_to_members(self.hub.get_user(member))
+                    assigned_repos = get_assigned_repos() 
+                    print assigned_repos                   
+                    for repo in assigned_repos:
+                        base, url = self.local_clone(repo) # ***
+                        self.remote_clone(repo, team, base)
+                else:
+                    current_class.remove(member)
+            for member in current_class:
+                if member not in updated_class:
+                    team = membership[member]
+                    self.del_members(team.name, [member])
+                        
+
     # Param:
     #   org: PyGitHub organization object
     # Iterates over all teams in the organization & deletes them.
@@ -399,11 +439,9 @@ class Manager():
     #   assign each team a clone of the repo containing the base code.
     def set_repos(self, lab):
         teams = [team for team in self.org.get_teams() if "team" in team.name]
-        
         if teams == []:
             print "ERROR: You need to set teams (-t) before distributing repos to them!"
             return False
-
         print "Setting repos for {}.".format(lab)
 
         base = self.set_base(lab)
@@ -668,6 +706,11 @@ class Manager():
     # HOUSEKEEPING METHODS
     #----------------------------------------------------------------------------------
 
+    def get_new_team(self):
+        teams = [int(team.name[4:]) for team in self.org.get_teams() if "team" in team.name]
+        teams.sort()
+        return "team{}".format(int(teams[-1]) + 1)
+
     # Purpose:
     #   Generate a repo name given a team name and a lab/assignment name
     #   to reduce floating magic strings
@@ -772,5 +815,22 @@ def load_log_to_email():
         return log2email
     except:
         return {}
+
+def save_max_team(number):
+    f = open("./config/max_team.txt", "w")
+    f.write(number)
+    f.close()
+
+def read_max_team():
+    f = open("./config/max_team.txt", "r")
+    i = f.read()
+    f.close()
+    return i
+
+def get_assigned_repos():
+    f = open("./config/assigned_repos.json", "r")
+    repos = json.load(f)
+    f.close
+    return repos
 
 
