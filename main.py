@@ -175,6 +175,11 @@ def main():
         print("WARNING: Organization is not set for the service.")
         return
 
+    m.get_usernames()
+    m.initialize_git_teams()
+    m.set_git_teams()
+    return
+
     if "-u" in args:
         m.get_usernames()
 

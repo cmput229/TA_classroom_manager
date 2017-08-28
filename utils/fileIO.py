@@ -6,6 +6,7 @@ class_csv = "./config/users.csv"
 class_json = "./config/users.json"
 team_csv = "./config/teams.csv"
 team_json = "./config/teams.json"
+inverted_team_json = "./config/inverted_teams.json"
 login_to_email = "./config/log_to_email.json"   
 email_file = "./config/emails.json"
 deadline_file = "./config/deadlines.csv"
@@ -42,6 +43,17 @@ def dump_teamslist(t):
     to = open(team_json, "w")
     json.dump(t, to)
     to.close()
+
+def dump_inverted_teams(it):
+    to = open(inverted_teams_json, "w")
+    json.dump(it, to)
+    to.close()
+
+def load_inverted_teams():
+    ti = open(inverted_teams_json, "r")
+    t = json.load(ti)
+    ti.close()
+    return t
 
 def load_teamslist():
     ti = open(team_json, "r")

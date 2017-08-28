@@ -141,44 +141,15 @@ class Manager():
             line = line.strip()
             teams[max_team] = [line]
             max_team = "team{}".format(int(max_team[4:]) + 1)
-
+        
         fileIO.dump_teamslist(teams)
-
-    # Takes an updated version of the class list as if from LDAP
-    # Looks-up usernames of students that have dropped, and removes them from the class.
-    # Looks-up usernames of students that have joined the class, and adds them to the teams appropriate.
-    # Distributes any repos that have been already distributed to the new students.
-    # ASSUMPTION:
-    # users.txt is the current snapshot of the class
-    def update_git_teams(self):
-        git_teams = get_remote_teams(self.org)
-        current_class = []
-        membership = {}
-        for team in git_teams:
-            for member in team.get_members():
-                current_class.append(member.login)
-                membership[member.login] = team
-        self.get_usernames()
-
-        updated_class = fileIO.load_classlist()
-
-        if current_class != updated_class:
-            for member in updated_class:
-                if member not in current_class:
-                    team_name = self.get_new_team()
-                    team = self.org.create_team(team_name)
-                    team.add_to_members(self.hub.get_user(member))
-                    assigned_repos = get_assigned_repos() 
-                    print assigned_repos                   
-                    for repo in assigned_repos:
-                        base, url = self.local_clone(repo) # ***
-                        self.remote_clone(repo, team, base)
-                else:
-                    current_class.remove(member)
-            for member in current_class:
-                if member not in updated_class:
-                    team = membership[member]
-                    self.del_members(team.name, [member])
+        
+        inverted_teamslist = {}
+        for team in teams.keys():
+            for member in teams[team]:
+                inverted_teamslist[member] = team
+        
+        fileIO.dump_inverted_teams(inverted_teamslist)
 
     # Params:
     #   hub: PyGitHub github object
@@ -200,6 +171,36 @@ class Manager():
             else:
                 print "{} already exists.".format(team_name)
 
+    # Takes an updated version of the class list as if from LDAP
+    # Looks-up usernames of students that have dropped, and removes them from the class.
+    # Looks-up usernames of students that have joined the class, and adds them to the teams appropriate.
+    # Distributes any repos that have been already distributed to the new students.
+    # ASSUMPTION:
+    # users.txt is the current snapshot of the class
+    def update_git_teams(self):
+        updated_class = set(fileIO.read_classlist())
+        teams = fileIO.load_teamslist()
+        inverted_teams = fileIO.load_inverted_teams()
+
+        # Remove members who have dropped
+        for member in inverted_teams.keys():
+            if member not in updated_class:
+                team = inverted_teams[member]
+                self.del_members(team, [member])    # Update remote
+                del(inverted_teams[member])         # Update inverted index
+                teams[team].remove(member)          # Update teams list
+            else:
+                updated_class.remove(member)        # In this case, the member was in the class and still is in the class.
+
+        # Add members who have added the class
+        for member in updated_class:
+            team = self.get_new_team()
+            self.add_members(team, [member])
+            inverted_teams[member] = team
+
+        fileIO.dump_teamslist(teams)
+        fileIO.dump_inverted_teams(inverted_teams)
+            
     # Param:
     #   org: PyGitHub organization object
     # Iterates over all teams in the organization & deletes them.
@@ -270,27 +271,30 @@ class Manager():
         remote_url = self.url + "usernames"
         repo = Repo("./tmp/dummy-repo/")
         print("Init local & remote.")
-        origin = repo.create_remote("usernames", self.insert_auth(remote_url))
-        origin.push(refspec="{}:{}".format("master", "master"))
-        print("Pushed.")
-
         try:
-            e = open("./config/users.txt", "r")
-            emails = [email.strip() for email in e.readlines() if email.strip() != ""]
-            emails.reverse()
-            e.close()
-            authors = [c.author.login for c in remote.get_commits()]
-            login_to_email = {authors[i]: emails[i] for i in range(len(authors))}
-
-            fileIO.dump_login_to_email(login_to_email)
-            fileIO.write_classlist(authors)
-            fileIO.dump_classlist(authors)
-
-            print("Github usernames written to ./config/users.csv and ./config/users.json")
-            print("JSON to match usernames to email accounts written to ./config/log_to_email.json")
+            origin = repo.create_remote("usernames", self.insert_auth(remote_url))
+            origin.push(refspec="{}:{}".format("master", "master"))
+            print("Pushed.")
         except:
-            print("WARNING: GITHUB USERNAMES NOT WRITTEN.")
+            remote.delete()
+            print "ERROR creating remote."
+        else:
+            try:
+                e = open("./config/users.txt", "r")
+                emails = [email.strip() for email in e.readlines() if email.strip() != ""]
+                emails.reverse()
+                e.close()
+                authors = [c.author.login for c in remote.get_commits()]
+                login_to_email = {authors[i]: emails[i] for i in range(len(authors))}
 
+                fileIO.dump_login_to_email(login_to_email)
+                fileIO.write_classlist(authors)
+                fileIO.dump_classlist(authors)
+
+                print("Github usernames written to ./config/users.csv and ./config/users.json")
+                print("JSON to match usernames to email accounts written to ./config/log_to_email.json")
+            except:
+                print("WARNING: GITHUB USERNAMES NOT WRITTEN.")
         try:
             remote.delete()
             shutil.rmtree("./tmp/")
