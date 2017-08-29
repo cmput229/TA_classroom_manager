@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import json
 import shutil
@@ -249,8 +250,6 @@ class Manager():
                 contact = log2email[member]
                 msg = "You have been added to {}.".format(team_name)
                 emails.append({"receiver": contact, "subject": team_name, "message": msg})
-            else:
-                print "{} already exists.".format(team_name)
 
         fileIO.dump_emails(emails)
         subprocess.call(["python", "./gmail/draft.py"])
@@ -293,8 +292,8 @@ class Manager():
             self.add_members(team, [member])
             inverted_teams[member] = team
 
-        fileIO.dump_teamslist(teams)
-        fileIO.dump_inverted_teams(inverted_teams)
+        # fileIO.dump_teamslist(teams)
+        # fileIO.dump_inverted_teams(inverted_teams)
             
     # Param:
     #   org: PyGitHub organization object
@@ -317,7 +316,8 @@ class Manager():
         fileIO.dump_emails(emails)
         subprocess.call(["python", "./gmail/draft.py"])
 
-        os.remove("./config/inverted_teams.json")
+        if os.path.isfile("./config/inverted_teams.json"):
+            os.remove("./config/inverted_teams.json")
 
     # Param:
     #   team: name of a team on GitHub
@@ -325,22 +325,41 @@ class Manager():
     # Purpose:
     #   Add member to team
     def add_members(self, team, members):
-        inverted_teams = fileIO.load_inverted_teams()
-        teams = {t.name: t.id for t in self.org.get_teams()}
-        log2email = fileIO.load_login_to_email()
-        if team in teams:
-            team = self.org.get_team(teams[team])
-        else:    
-            team = self.org.create_team(team)
-        inverted_teams[team.name] = members
-        emails = []
-        for member in members:
-            team.add_to_members(self.hub.get_user(member))
-            contact = log2email[member]
-            msg = "You have been added to {}.".format(team.name)
-            emails.append({"receiver": contact, "subject": team.name, "message": msg})
+        print("Adding {} to {}.".format(members, team))
+        git_teams = {t.name: t.id for t in self.org.get_teams()}
 
+        git_team = None
+        if team in git_teams:
+            git_team = self.org.get_team(teams[team])
+        else:    
+            git_team = self.org.create_team(team)
+        for member in members:
+            git_team.add_to_members(self.hub.get_user(member))
+
+        inverted_teams = fileIO.load_inverted_teams()
+        for member in members:
+            inverted_teams[member] = team
+        fileIO.dump_inverted_teams(inverted_teams)
+
+        emails = []
+        log2email = fileIO.load_login_to_email()
+        for member in members:
+            contact = log2email[member]
+            msg = "You have been added to {}.".format(team)
+            emails.append({"receiver": contact, "subject": team, "message": msg})
         fileIO.dump_emails(emails)
+
+        teams = fileIO.load_teamslist()
+        print "teams before adding:"
+        print teams
+        if team in teams:
+            teams[team].extend(members)
+        else:
+            teams[team] = members
+        print "teams after adding:"
+        print teams
+        fileIO.dump_teamslist(teams)
+        
         subprocess.call(["python", "./gmail/draft.py"])
 
     # Param:
@@ -349,29 +368,27 @@ class Manager():
     # Purpose:
     #   Remove member from team
     def del_members(self, team, members):
-        inverted_teams = fileIO.load_inverted_teams()
-
-        teams = {t.name: t.id for t in self.org.get_teams()}
-        team = self.org.get_team(teams[team])
+        git_teams = {t.name: t.id for t in self.org.get_teams()}
+        git_team = self.org.get_team(git_teams[team])
         for member in members:
-            team.remove_from_members(self.hub.get_user(member))
-            del(inverted_teams[member])
+            git_team.remove_from_members(self.hub.get_user(member))
         
+        inverted_teams = fileIO.load_inverted_teams()
+        for member in members:
+            del(inverted_teams[member])
+        fileIO.dump_inverted_teams(inverted_teams)
+
         teams = fileIO.load_teamslist()
-        members = [m for m in team.get_members()]
-        if members == []:
-            team.delete()
-            del(teams[team.name])
+        git_members = [m.login for m in git_team.get_members()]
+        if git_members == []:
+            git_team.delete()
+            del(teams[team])
         else:
             teams[team] = members
+        fileIO.dump_teamslist(teams)
         
         print teams
         print inverted_teams        
-
-
-        fileIO.dump_inverted_teams(inverted_teams)
-        fileIO.dump_teamslist(teams)
-
 
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 # Functions to handle file IO.
+# -*- coding: utf-8 -*-
 import json
 
 
@@ -48,7 +49,15 @@ def read_teamslist():
     except:
         return []
 
+def load_teamslist():
+    ti = open(team_json, "r")
+    t = json.load(ti)
+    ti.close()
+    return t
+
 def dump_teamslist(t):
+    print "dumping"
+    print t
     to = open(team_json, "w")
     json.dump(t, to)
     to.close()
@@ -66,12 +75,6 @@ def load_inverted_teams():
         return t
     except:
         return {}
-
-def load_teamslist():
-    ti = open(team_json, "r")
-    t = json.load(ti)
-    ti.close()
-    return t
     
 def dump_login_to_email(l):
     f = open("./config/log_to_email.json", "w")
