@@ -19,10 +19,8 @@ import shutil
 
 def main():
     usernames = []
-    subprocess.call(["./utils/init_usernames.sh"])
+    subprocess.call(["node ./usernames/index.js"])
     a = raw_input()
-
-    shutil.rmtree("./tmp/")
 
 
 main()

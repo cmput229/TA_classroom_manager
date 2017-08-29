@@ -115,141 +115,6 @@ class Manager():
     # TEAM METHODS
     #----------------------------------------------------------------------------------
 
-    # Default:      Each student in the class is in their own team
-    # Nondefault:   If students are allowed to form groups, then their groups should
-    #               be identified in teams.txt
-    # Should check that students are not member of more than one group.
-    # class.txt is a text file with student gitIDs on each line
-    # teams.txt is a text file that identifies which student gitIDs are proposed
-    # to be group members.  Groups should be in csv format.
-    def initialize_git_teams(self):
-        print "Parsing class & team files."
-        teams = {}
-
-        c = fileIO.read_classlist()
-        t = fileIO.read_teamslist()
-        max_team = get_max_team(self.org)
-
-        for team in t:
-            teams[max_team] = team
-            max_team = "team{}".format(int(max_team[4:]) + 1)
-            for member in team:
-                if member in c:
-                    c.remove(member)
-
-        for line in c:
-            line = line.strip()
-            teams[max_team] = [line]
-            max_team = "team{}".format(int(max_team[4:]) + 1)
-        
-        fileIO.dump_teamslist(teams)
-        
-        inverted_teamslist = {}
-        for team in teams.keys():
-            for member in teams[team]:
-                inverted_teamslist[member] = team
-        
-        fileIO.dump_inverted_teams(inverted_teamslist)
-
-    # Params:
-    #   hub: PyGitHub github object
-    #   org: PyGitHub organization object
-    # Purpose:
-    #   To iterate over all the teams defined locally with team_defs.json
-    #   and create teams on GitHub.
-    def set_git_teams(self):
-        print "Setting teams on GitHub."
-
-        local_teams = fileIO.load_teamslist()
-        remote_teams = get_remote_team_names(self.org)
-        
-        for team_name in local_teams.keys():
-            if team_name not in remote_teams:
-                t = self.org.create_team(team_name)
-                for member in local_teams[team_name]:
-                    t.add_to_members(self.hub.get_user(member))
-            else:
-                print "{} already exists.".format(team_name)
-
-    # Takes an updated version of the class list as if from LDAP
-    # Looks-up usernames of students that have dropped, and removes them from the class.
-    # Looks-up usernames of students that have joined the class, and adds them to the teams appropriate.
-    # Distributes any repos that have been already distributed to the new students.
-    # ASSUMPTION:
-    # users.txt is the current snapshot of the class
-    def update_git_teams(self):
-        updated_class = set(fileIO.read_classlist())
-        teams = fileIO.load_teamslist()
-        inverted_teams = fileIO.load_inverted_teams()
-
-        # Remove members who have dropped
-        for member in inverted_teams.keys():
-            if member not in updated_class:
-                team = inverted_teams[member]
-                self.del_members(team, [member])    # Update remote
-                del(inverted_teams[member])         # Update inverted index
-                teams[team].remove(member)          # Update teams list
-            else:
-                updated_class.remove(member)        # In this case, the member was in the class and still is in the class.
-
-        # Add members who have added the class
-        for member in updated_class:
-            team = self.get_new_team()
-            self.add_members(team, [member])
-            inverted_teams[member] = team
-
-        fileIO.dump_teamslist(teams)
-        fileIO.dump_inverted_teams(inverted_teams)
-            
-    # Param:
-    #   org: PyGitHub organization object
-    # Iterates over all teams in the organization & deletes them.
-    def del_git_teams(self):
-        teams = get_remote_teams(self.org)
-        log2email = fileIO.load_login_to_email()
-        emails = []
-
-        for team in teams:
-            members = team.get_members()
-            for member in members:
-                contact = log2email[member.login]
-                msg = "You have been removed from {}.".format(team.name)
-                emails.append({"receiver": contact, "subject": team.name, "message": msg})
-                team.remove_from_members(member)
-            print "Deleting team " + team.name
-            team.delete()
-
-        fileIO.dump_emails(emails)
-        subprocess.call(["python", "./gmail/draft.py"])
-
-    # Param:
-    #   team: name of a team on GitHub
-    #   member: name of a member of the organization
-    # Purpose:
-    #   Add member to team
-    def add_members(self, team, members):
-        teams = {t.name: t.id for t in self.org.get_teams()}
-        if team in teams:
-            team = self.org.get_team(teams[team])
-        else:
-            team = self.org.create_team(team)
-        for member in members:
-            team.add_to_members(self.hub.get_user(member))
-
-    # Param:
-    #   team: name of a team on GitHub
-    #   member: name of a member of the organization
-    # Purpose:
-    #   Remove member from team
-    def del_members(self, team, members):
-        teams = {t.name: t.id for t in self.org.get_teams()}
-        team = self.org.get_team(teams[team])
-        for member in members:
-            team.remove_from_members(self.hub.get_user(member))
-        members = [m for m in team.get_members()]
-        if members == []:
-            team.delete()
-
     # Uses init_usernames.sh to establish a repo cloning https://github.com/Klortho/get-github-usernames.git
     # * Installs npm to permit the repo's use.
     # * Copies config/users.txt into that folder to inform the tool what github emails are boeing used.
@@ -265,11 +130,22 @@ class Manager():
     # Delete the cloned repo.
     def get_usernames(self):
         print("Gathering usernames.")
-        subprocess.call(["./utils/init_usernames.sh"])
-        print("init_usernames completed.")
-        remote = self.org.create_repo("usernames")
+        shutil.copyfile("./config/users.txt", "./usernames/users.txt")
+        os.chdir("./usernames/")
+        print os.getcwd()
+        subprocess.call(["node", "./index.js"])
+        os.chdir("../")
+        remote = None
+        try:
+            remote = self.org.create_repo("usernames")
+        except:
+            remote = self.org.get_repo("usernames")
+            remote.delete()
+            remote = self.org.create_repo("usernames")
+
         remote_url = self.url + "usernames"
-        repo = Repo("./tmp/dummy-repo/")
+        repo = Repo("./usernames/dummy-repo/")
+            
         print("Init local & remote.")
         try:
             origin = repo.create_remote("usernames", self.insert_auth(remote_url))
@@ -297,7 +173,7 @@ class Manager():
                 print("WARNING: GITHUB USERNAMES NOT WRITTEN.")
         try:
             remote.delete()
-            shutil.rmtree("./tmp/")
+            shutil.rmtree("./usernames/dummy-repo")
             print("Working directory clean.")
         except:
             try:    
@@ -305,6 +181,197 @@ class Manager():
             except:
                 pass
             print("WARNING: ./tmp/ REMAINS IN FILETREE.")
+
+    # Default:      Each student in the class is in their own team
+    # Nondefault:   If students are allowed to form groups, then their groups should
+    #               be identified in teams.txt
+    # Should check that students are not member of more than one group.
+    # class.txt is a text file with student gitIDs on each line
+    # teams.txt is a text file that identifies which student gitIDs are proposed
+    # to be group members.  Groups should be in csv format.
+    def initialize_git_teams(self):
+        print "Parsing class & team files."
+        teams = {}
+
+        c = fileIO.read_classlist()
+        t = fileIO.read_teamslist()
+        it = fileIO.load_inverted_teams()
+        if it != {}:
+            self.update_git_teams()
+            return
+        else:
+            max_team = get_max_team(self.org)
+
+            for team in t:
+                teams[max_team] = team
+                max_team = "team{}".format(int(max_team[4:]) + 1)
+                for member in team:
+                    if member in c:
+                        c.remove(member)
+
+            for line in c:
+                line = line.strip()
+                teams[max_team] = [line]
+                max_team = "team{}".format(int(max_team[4:]) + 1)
+            
+            fileIO.dump_teamslist(teams)
+            
+            inverted_teamslist = {}
+            for team in teams.keys():
+                for member in teams[team]:
+                    inverted_teamslist[member] = team
+            
+            fileIO.dump_inverted_teams(inverted_teamslist)
+            self.set_git_teams()
+            return
+
+    # Params:
+    #   hub: PyGitHub github object
+    #   org: PyGitHub organization object
+    # Purpose:
+    #   To iterate over all the teams defined locally with team_defs.json
+    #   and create teams on GitHub.
+    def set_git_teams(self):
+        print "Setting teams on GitHub."
+
+        local_teams = fileIO.load_teamslist()
+        remote_teams = get_remote_team_names(self.org)
+        log2email = fileIO.load_login_to_email()
+        emails = []
+
+        for team_name in local_teams.keys():
+            if team_name not in remote_teams:
+                t = self.org.create_team(team_name)
+            else:
+                t = get_team(self.org, team_name)
+            for member in local_teams[team_name]:
+                t.add_to_members(self.hub.get_user(member))
+                contact = log2email[member]
+                msg = "You have been added to {}.".format(team_name)
+                emails.append({"receiver": contact, "subject": team_name, "message": msg})
+            else:
+                print "{} already exists.".format(team_name)
+
+        fileIO.dump_emails(emails)
+        subprocess.call(["python", "./gmail/draft.py"])
+
+    # Takes an updated version of the class list as if from LDAP
+    # Looks-up usernames of students that have dropped, and removes them from the class.
+    # Looks-up usernames of students that have joined the class, and adds them to the teams appropriate.
+    # Distributes any repos that have been already distributed to the new students.
+    # ASSUMPTION:
+    # users.txt is the current snapshot of the class
+    def update_git_teams(self):
+        updated_class = set(fileIO.read_classlist())
+        teams = fileIO.load_teamslist()
+        inverted_teams = fileIO.load_inverted_teams()
+
+        print updated_class
+        print teams
+        print inverted_teams    
+        
+        # Find members who have dropped
+        dropped_set = set([])
+        for member in inverted_teams.keys():
+            if member not in updated_class:
+                dropped_set.add(member)
+            elif member in updated_class:
+                updated_class.remove(member)        # In this case, the member was 
+                                                    # in the class and still is in the class.
+        added_set = set(updated_class)
+
+        print dropped_set
+        print added_set
+
+        for member in dropped_set:
+            team = inverted_teams[member]
+            self.del_members(team, [member])
+
+        # Add members who have added the class
+        for member in added_set:
+            team = get_max_team(self.org)
+            self.add_members(team, [member])
+            inverted_teams[member] = team
+
+        fileIO.dump_teamslist(teams)
+        fileIO.dump_inverted_teams(inverted_teams)
+            
+    # Param:
+    #   org: PyGitHub organization object
+    # Iterates over all teams in the organization & deletes them.
+    def del_git_teams(self):
+        teams = get_remote_teams(self.org)
+        log2email = fileIO.load_login_to_email()
+        emails = []
+
+        for team in teams:
+            members = team.get_members()
+            for member in members:
+                contact = log2email[member.login]
+                msg = "You have been removed from {}.".format(team.name)
+                emails.append({"receiver": contact, "subject": team.name, "message": msg})
+                team.remove_from_members(member)
+            print "Deleting team " + team.name
+            team.delete()
+
+        fileIO.dump_emails(emails)
+        subprocess.call(["python", "./gmail/draft.py"])
+
+        os.remove("./config/inverted_teams.json")
+
+    # Param:
+    #   team: name of a team on GitHub
+    #   member: name of a member of the organization
+    # Purpose:
+    #   Add member to team
+    def add_members(self, team, members):
+        inverted_teams = fileIO.load_inverted_teams()
+        teams = {t.name: t.id for t in self.org.get_teams()}
+        log2email = fileIO.load_login_to_email()
+        if team in teams:
+            team = self.org.get_team(teams[team])
+        else:    
+            team = self.org.create_team(team)
+        inverted_teams[team.name] = members
+        emails = []
+        for member in members:
+            team.add_to_members(self.hub.get_user(member))
+            contact = log2email[member]
+            msg = "You have been added to {}.".format(team.name)
+            emails.append({"receiver": contact, "subject": team.name, "message": msg})
+
+        fileIO.dump_emails(emails)
+        subprocess.call(["python", "./gmail/draft.py"])
+
+    # Param:
+    #   team: name of a team on GitHub
+    #   member: name of a member of the organization
+    # Purpose:
+    #   Remove member from team
+    def del_members(self, team, members):
+        inverted_teams = fileIO.load_inverted_teams()
+
+        teams = {t.name: t.id for t in self.org.get_teams()}
+        team = self.org.get_team(teams[team])
+        for member in members:
+            team.remove_from_members(self.hub.get_user(member))
+            del(inverted_teams[member])
+        
+        teams = fileIO.load_teamslist()
+        members = [m for m in team.get_members()]
+        if members == []:
+            team.delete()
+            del(teams[team.name])
+        else:
+            teams[team] = members
+        
+        print teams
+        print inverted_teams        
+
+
+        fileIO.dump_inverted_teams(inverted_teams)
+        fileIO.dump_teamslist(teams)
+
 
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------
@@ -780,4 +847,13 @@ def get_max_team(org):
     else:
         teams.sort()
         return "team{}".format(int(teams[-1]) + 1)
+
+def get_team(org, team_name):
+    teams = {team.name: team for team in org.get_teams()}
+    if team_name in teams:
+        return teams[team_name]
+    else:
+        return {}
+    
+    
 

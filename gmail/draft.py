@@ -133,7 +133,7 @@ def main():
     http = credentials.authorize(httplib2.Http())
     srvc = discovery.build('gmail', 'v1', http=http)
 
-    e = open("./gmail/emails.json", "r")
+    e = open("./config/emails.json", "r")
     emails = json.load(e)
     e.close()
 

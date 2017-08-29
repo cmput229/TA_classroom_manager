@@ -18,6 +18,13 @@ fi
 
 virtualenv venv
 source venv/bin/activate
+
+mkdir usernames
+cd ./usernames
+git clone https://github.com/Klortho/get-github-usernames.git . # Clone repo that allows us to get usernames
+npm install
+cd ../
+
 pip install -r requirements.txt
 cd ./gmail
 pip install --upgrade google-api-python-client

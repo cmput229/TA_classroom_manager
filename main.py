@@ -175,19 +175,23 @@ def main():
         print("WARNING: Organization is not set for the service.")
         return
 
-    m.get_usernames()
-    m.initialize_git_teams()
-    m.set_git_teams()
-    return
+    # m.get_usernames()
+    # m.initialize_git_teams()
+    # m.set_git_teams()
+    # return
 
     if "-u" in args:
         m.get_usernames()
 
     if "-t" in args:
         m.get_usernames()
-        m.set_teams()                           # local
-        m.set_git_teams()                       # remote
+        m.initialize_git_teams()
+        # m.set_git_teams()                       # remote
         m.git_to_csv()                          # setup csv for teams
+
+    if "-T" in args:
+        m.get_usernames()
+        m.update_git_teams()
 
     if "-a" in args:
         flag_args = parse_flag("-a", args)      # parse

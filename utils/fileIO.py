@@ -6,7 +6,7 @@ class_csv = "./config/users.csv"
 class_json = "./config/users.json"
 team_csv = "./config/teams.csv"
 team_json = "./config/teams.json"
-inverted_team_json = "./config/inverted_teams.json"
+inverted_teams_json = "./config/inverted_teams.json"
 login_to_email = "./config/log_to_email.json"   
 email_file = "./config/emails.json"
 deadline_file = "./config/deadlines.csv"
@@ -17,10 +17,13 @@ def write_classlist(l):
     f.close()
 
 def read_classlist():
-    c_list = open(class_csv, "r")
-    c = [term.strip() for term in c_list.read().split(",")]
-    c_list.close()
-    return c
+    try:
+        c_list = open(class_csv, "r")
+        c = [term.strip() for term in c_list.read().split(",")]
+        c_list.close()
+        return c
+    except:
+        return []
 
 def dump_classlist(l):
     f = open(class_json, "w")
@@ -28,16 +31,22 @@ def dump_classlist(l):
     f.close()
 
 def load_classlist():
-    ci = open(class_json, "r")
-    c = json.load(ci)
-    ci.close()
-    return c
+    try:
+        ci = open(class_json, "r")
+        c = json.load(ci)
+        ci.close()
+        return c
+    except:
+        return {}
 
 def read_teamslist():
-    teams_list = open(team_csv, "r")
-    t = [line.strip().split(",") for line in teams_list.readlines()]
-    teams_list.close()
-    return t
+    try:
+        teams_list = open(team_csv, "r")
+        t = [line.strip().split(",") for line in teams_list.readlines()]
+        teams_list.close()
+        return t
+    except:
+        return []
 
 def dump_teamslist(t):
     to = open(team_json, "w")
@@ -50,10 +59,13 @@ def dump_inverted_teams(it):
     to.close()
 
 def load_inverted_teams():
-    ti = open(inverted_teams_json, "r")
-    t = json.load(ti)
-    ti.close()
-    return t
+    try:
+        ti = open(inverted_teams_json, "r")
+        t = json.load(ti)
+        ti.close()
+        return t
+    except:
+        return {}
 
 def load_teamslist():
     ti = open(team_json, "r")

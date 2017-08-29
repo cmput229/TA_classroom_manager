@@ -12,6 +12,7 @@ client_secret.json
 **/marker/summary/
 **/moss/results/
 **/submissions/
+**/usernames/
 utils/*.pyo
 utils/*.pyc
 
