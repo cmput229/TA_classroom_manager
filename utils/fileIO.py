@@ -134,7 +134,7 @@ def read_token():
 #   Needed for access using GitPython (different interface from PyGitHub).
 # Returns:
 #   The url, but with oauth token inserted
-def auth_url(self, url):
+def auth_url(url):
     token = fileIO.read_token()
     url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
     return url
@@ -152,14 +152,14 @@ def dump_assigned_repos(r):
 
 # Purpose:
 #   To save the repos assigned to teams to file.
-def dump_repos(self, urls):
+def dump_repos(urls):
     f = open("./config/repos.json", "w")
     repos = json.dump(urls, f)
     f.close()
 
 # Purpose:
 #   To read the repos assigned to teams from file.
-def load_repos(self):
+def load_repos():
     try:
         f = open("./config/repos.json", "r")
         repos = json.load(f)
