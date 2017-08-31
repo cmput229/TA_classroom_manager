@@ -10,7 +10,7 @@ team_json = "./config/teams.json"
 inverted_teams_json = "./config/inverted_teams.json"
 login_to_email = "./config/log_to_email.json"   
 email_file = "./config/emails.json"
-deadline_file = "./config/deadlines.csv"
+deadlines_file = "./config/deadlines.csv"
 
 def write_classlist(l):
     f = open(class_csv, "w")
@@ -103,9 +103,9 @@ def dump_emails(e):
 
 def read_deadlines():
     f = open(deadlines_file, "r")
-    deadlines_file = open("./config/deadlines.csv", "r")
-    d = deadlines_file.readlines()
-    deadlines_file.close()
+    di = open("./config/deadlines.csv", "r")
+    d = di.readlines()
+    di.close()
 
     if "\n" in d:
         d.remove("\n")

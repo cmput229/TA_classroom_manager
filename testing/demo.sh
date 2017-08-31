@@ -1,50 +1,83 @@
 #!/bin/bash
 
+if ! [ -e git.token ]
+    then
+        echo "Please provide a git.token."
+        exit
+fi
+
 echo "Setting virtualenv"
 source venv/bin/activate
-
-clear
+echo "--------------------------------------------------"
 echo "Clearing organization."
-./main.py -Q
+echo "--------------------------------------------------"
+echo ""
+./main.py -X
+echo ""
+echo "--------------------------------------------------"
+echo "Clearing defaults."
+echo "--------------------------------------------------"
+echo ""
+./main.py -O -R -A -S -D
+echo ""
 read -p "Press ENTER to begin the demo."
 clear
-
-echo "Clearing defaults."
-./main.py -O -R -A -S -D
-read -p "Press ENTER to set defaults."
-clear
-
+echo "--------------------------------------------------"
 echo "Setting defaults."
+echo "--------------------------------------------------"
+echo ""
 ./main.py -O GitHubClassroomTestCMPUT229 -R lab1 -A -S e337d4be.ngrok.io -D
-read -p "Press ENTER to assign teams."
+echo ""
+read -p "Press ENTER to continue the demo."
 clear
-
+echo "--------------------------------------------------"
 echo "Assigning teams."
+echo "--------------------------------------------------"
+echo ""
 ./main.py -t
-read -p "Press ENTER to assign repos."
+echo ""
+read -p "Press ENTER to continue the demo."
 clear
-
+echo "--------------------------------------------------"
 echo "Assigning repos."
+echo "--------------------------------------------------"
+echo ""
 ./main.py -d
-read -p "Press ENTER to change lab."
+echo ""
+read -p "Press ENTER to continue the demo."
 clear
-
+echo "--------------------------------------------------"
 echo "Changing lab assignment & distributing."
+echo "--------------------------------------------------"
+echo ""
 ./main.py -R lab3 -d
-read -p "Press ENTER to emulate student work."
+echo ""
+read -p "Press ENTER to continue the demo."
 clear
-
-echo "Emulating student work on lab1."
-./testing/lab1/demo.sh
-read -p "Press ENTER to change to lab1 and collect."
-clear 
-
+echo "--------------------------------------------------"
 echo "Changing lab and collecting repos."
+echo "--------------------------------------------------"
+echo ""
+./testing/lab1/demo.sh
+read -p "Press ENTER to continue the demo."
+clear
+./testing/lab3/demo.sh
+read -p "Press ENTER to continue the demo."
+clear
+./main.py -f
 ./main.py -R lab1
 ./main.py -f
-read -p "Press ENTER to clear out and finish the demo."
+read -p "Press ENTER to continue the demo."
 clear
-
+echo "--------------------------------------------------"
+echo "Clearing defaults."
+echo "--------------------------------------------------"
+echo ""
 ./main.py -Q
 ./main.py -O -R -A -S -D
+echo""
+echo "--------------------------------------------------"
+read -p "Press ENTER to finish the demo."
+clear
 deactivate
+
