@@ -384,6 +384,7 @@ class Manager():
     # Assumes that the url for the lab's repo within the organization matches the repo name
     def set_base(self, lab):
         urls = fileIO.load_repos()
+        print urls
         try:
             print "Setting local clone of base code."
             base, url = self.local_clone(lab)

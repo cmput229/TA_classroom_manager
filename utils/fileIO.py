@@ -135,9 +135,20 @@ def read_token():
 # Returns:
 #   The url, but with oauth token inserted
 def auth_url(url):
-    token = fileIO.read_token()
+    token = read_token()
     url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
     return url
+
+def load_assigments():
+    f = open("./config/assignments.json", "r")
+    repos = json.load(f)
+    f.close
+    return repos
+
+def dump_assignments(a):
+    ao = open("./config/assignments.json", "w")
+    json.dump(a, ao)
+    ao.close   
 
 def load_assigned_repos():
     f = open("./config/assigned_repos.json", "r")
