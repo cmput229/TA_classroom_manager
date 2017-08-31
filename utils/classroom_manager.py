@@ -538,7 +538,7 @@ class Manager():
     def get_repos(self, lab):
         print "Getting repos from GitHub."
         teams = get_remote_teams(self.org)
-        teams = [team.name for team in teams in "team" in team.name]
+        teams = [team.name for team in teams if "team" in team.name]
         # teams.remove("Students")
         if not os.path.isdir("./submissions/"):
             os.mkdir("./submissions/")
