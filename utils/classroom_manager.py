@@ -303,8 +303,22 @@ class Manager():
         fileIO.dump_emails(emails)
         subprocess.call(["python", "./gmail/draft.py"])
 
-        if os.path.isfile("./config/inverted_teams.json"):
-            os.remove("./config/inverted_teams.json")
+    def del_local_files(self):
+        files = [
+                "./config/inverted_teams.json",
+                "./config/inverted_teams.json",
+                "./config/assigned_repos.json",
+                "./config/assignments.json",
+                "./config/repos.json",
+                "./config/emails.json",
+                "./config/log_to_email.json",
+                "./config/teams.json",
+                "./config/users.csv",
+                "./config/users.json"
+                ]
+        for f in files:
+            if os.path.isfile(f):
+                os.remove(f)
 
     # Param:
     #   team: name of a team on GitHub
@@ -320,6 +334,16 @@ class Manager():
             git_team = self.org.get_team(teams[team])
         else:    
             git_team = self.org.create_team(team)
+            for lab in fileIO.load_assignments():
+                base = self.set_base(lab)
+                if base:
+                    remote = self.remote_clone(lab, git_team, base)
+                    urls = fileIO.load_repos()
+                    if team in urls:
+                        urls[team][lab] = remote
+                    else:
+                        urls[team] = {lab: remote}
+                    fileIO.dump_repos(urls)
         for member in members:
             git_team.add_to_members(self.hub.get_user(member))
 
@@ -384,7 +408,6 @@ class Manager():
     # Assumes that the url for the lab's repo within the organization matches the repo name
     def set_base(self, lab):
         urls = fileIO.load_repos()
-        print urls
         try:
             print "Setting local clone of base code."
             base, url = self.local_clone(lab)
@@ -435,13 +458,16 @@ class Manager():
         return base_repo, url
 
     def assign_repos(self, lab, base):
+        assignments = fileIO.load_assignments()
+        assignments.append(lab)
+        fileIO.dump_assignments(assignments)
+
         teams = self.org.get_teams()
         teams = [team for team in teams if "team" in team.name]
         urls = fileIO.load_repos()
         for team in teams:
             repos = team.get_repos()
             repos = [repo.name for repo in repos]
-            lab_name = self.gen_repo_name(lab, team.name)
             try:
                 print "Assigning " + team.name + " the repo."
                 team_repo = self.remote_clone(lab, team, base)

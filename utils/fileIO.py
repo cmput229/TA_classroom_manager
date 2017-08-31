@@ -139,11 +139,14 @@ def auth_url(url):
     url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
     return url
 
-def load_assigments():
-    f = open("./config/assignments.json", "r")
-    repos = json.load(f)
-    f.close
-    return repos
+def load_assignments():
+    try:
+        f = open("./config/assignments.json", "r")
+        repos = json.load(f)
+        f.close
+        return repos
+    except:
+        return []
 
 def dump_assignments(a):
     ao = open("./config/assignments.json", "w")

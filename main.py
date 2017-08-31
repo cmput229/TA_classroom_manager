@@ -7,6 +7,7 @@ from utils.classroom_manager import *
 from utils import spimgrader as grader
 import utils.moss
 import utils.graderII as graderII
+import utils.fileIO
 
 # flags:  
 def help():  
@@ -206,10 +207,11 @@ def main():
         m.del_members(team, members)            # delete
     
     if "-s" in args:
-        if not m.is_assigned(defs["repo"]):
-            m.set_repos(defs["repo"])               # Set github repos
-        else:
+        assigned = fileIO.load_assignments()
+        if defs["repo"] in assigned:
             print("The repo {} has already been assigned to at least one team".format(defs["repo"]))
+        else:
+            m.set_repos(defs["repo"])               # Set github repos
 
     if "-w" in args:
         if m.is_assigned(defs["repo"]):
@@ -218,10 +220,11 @@ def main():
             print("You must distribute the repo {} before performing this action.".format(defs["repo"]))
 
     if "-d" in args:
-        if not m.is_assigned(defs["repo"]):
-            m.distribute(defs["repo"])
+        assigned = fileIO.load_assignments()
+        if defs["repo"] in assigned:
+            print("The repo {} has already been assigned to at least one team".format(defs["repo"]))
         else:
-            print("The repo {} has already been assigned to at lest one team".format(defs["repo"]))
+            m.distribute(defs["repo"])
 
     if "-f" in args:
         if m.is_assigned(defs["repo"]):
@@ -277,6 +280,7 @@ def main():
         if confirm:
             m.del_git_repos()                   # remove remote repos
             m.del_git_teams()                   # remove remote teams
+            m.del_local_files()
 
     
     # For automated testing.
