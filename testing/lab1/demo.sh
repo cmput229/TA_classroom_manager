@@ -1,7 +1,8 @@
 # Clone team0's repo
-git clone https://c5836887569f2169e2d06e7630468c6f23d65720:x-oauth-basic@github.com/GitHubClassroomTestCMPUT229/team0_lab1.git ./testing/lab1/team0
+TOKEN=$(cat ./git.token)
+git clone https://$TOKEN:x-oauth-basic@github.com/GitHubClassroomTestCMPUT229/team0_lab1.git ./testing/lab1/team0
 # Clone team1's repo
-git clone https://c5836887569f2169e2d06e7630468c6f23d65720:x-oauth-basic@github.com/GitHubClassroomTestCMPUT229/team1_lab1.git ./testing/lab1/team1
+git clone https://$TOKEN:x-oauth-basic@github.com/GitHubClassroomTestCMPUT229/team1_lab1.git ./testing/lab1/team1
 # Add lab1.s to team1's repo
 rm -f ./testing/lab1/team1/lab1.s
 cp ./testing/lab1/lab1.s ./testing/lab1/team1/

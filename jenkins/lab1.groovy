@@ -4,7 +4,8 @@ String org = "GitHubClassroomTestCMPUT229/"
 String lab = "lab1"
 def repos = [
 	"team0_lab1",
-	"team1_lab1"
+	"team1_lab1",
+	"team2_lab1"
 ]
 
 repos.each {
