@@ -126,4 +126,44 @@ def read_token():
         print("Error reading git.token.  Ensure that you have an OAuth token in git.token.")
         return None
 
+# Param:
+#   url: string representation of a GitHub resource.
+# Purpose:
+#   Inserts an oauth token in the url to make access easier, and to keep from committing 
+#   oauth tokens to git repos.  It lets the url remain unaltered at the higher scope.
+#   Needed for access using GitPython (different interface from PyGitHub).
+# Returns:
+#   The url, but with oauth token inserted
+def auth_url(self, url):
+    token = fileIO.read_token()
+    url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
+    return url
 
+def load_assigned_repos():
+    f = open("./config/assigned_repos.json", "r")
+    repos = json.load(f)
+    f.close
+    return repos
+
+def dump_assigned_repos(r):
+    ro = open("./config/assigned_repos.json", "w")
+    json.dump(r, ro)
+    ro.close
+
+# Purpose:
+#   To save the repos assigned to teams to file.
+def dump_repos(self, urls):
+    f = open("./config/repos.json", "w")
+    repos = json.dump(urls, f)
+    f.close()
+
+# Purpose:
+#   To read the repos assigned to teams from file.
+def load_repos(self):
+    try:
+        f = open("./config/repos.json", "r")
+        repos = json.load(f)
+        f.close()
+        return repos
+    except:
+        return {}

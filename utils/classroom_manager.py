@@ -87,9 +87,6 @@ import fileIO
 #   - json_to_csv
 #   - git_to_csv
 #   - remove_local
-#   - insert_auth
-#   - load_repos
-#   - write_repos
 
 class Manager():
     def __init__(self, name):
@@ -149,7 +146,7 @@ class Manager():
             
         print("Init local & remote.")
         try:
-            origin = repo.create_remote("usernames", self.insert_auth(remote_url))
+            origin = repo.create_remote("usernames", fileIO.auth_url(remote_url))
             origin.push(refspec="{}:{}".format("master", "master"))
             print("Pushed.")
         except:
@@ -263,11 +260,7 @@ class Manager():
     def update_git_teams(self):
         updated_class = set(fileIO.read_classlist())
         teams = fileIO.load_teamslist()
-        inverted_teams = fileIO.load_inverted_teams()
-
-        print updated_class
-        print teams
-        print inverted_teams    
+        inverted_teams = fileIO.load_inverted_teams()   
         
         # Find members who have dropped
         dropped_set = set([])
@@ -279,9 +272,6 @@ class Manager():
                                                     # in the class and still is in the class.
         added_set = set(updated_class)
 
-        print dropped_set
-        print added_set
-
         for member in dropped_set:
             team = inverted_teams[member]
             self.del_members(team, [member])
@@ -291,9 +281,6 @@ class Manager():
             team = get_max_team(self.org)
             self.add_members(team, [member])
             inverted_teams[member] = team
-
-        # fileIO.dump_teamslist(teams)
-        # fileIO.dump_inverted_teams(inverted_teams)
             
     # Param:
     #   org: PyGitHub organization object
@@ -350,14 +337,10 @@ class Manager():
         fileIO.dump_emails(emails)
 
         teams = fileIO.load_teamslist()
-        print "teams before adding:"
-        print teams
         if team in teams:
             teams[team].extend(members)
         else:
             teams[team] = members
-        print "teams after adding:"
-        print teams
         fileIO.dump_teamslist(teams)
         
         subprocess.call(["python", "./gmail/draft.py"])
@@ -385,10 +368,7 @@ class Manager():
             del(teams[team])
         else:
             teams[team] = members
-        fileIO.dump_teamslist(teams)
-        
-        print teams
-        print inverted_teams        
+        fileIO.dump_teamslist(teams)      
 
     # DISTRIBUTION METHODS
     #----------------------------------------------------------------------------------
@@ -403,7 +383,7 @@ class Manager():
 
     # Assumes that the url for the lab's repo within the organization matches the repo name
     def set_base(self, lab):
-        urls = self.load_repos()
+        urls = fileIO.load_repos()
         try:
             print "Setting local clone of base code."
             base, url = self.local_clone(lab)
@@ -435,7 +415,7 @@ class Manager():
         except:
             team_repo = self.org.create_repo(repo_name, team_id=team)
         repo_url = self.url + repo_name
-        remote = base_repo.create_remote(team_repo.name, self.insert_auth(repo_url))
+        remote = base_repo.create_remote(team_repo.name, fileIO.auth_url(repo_url))
         remote.push(refspec="{}:{}".format("master", "master"))
         return repo_url
 
@@ -450,13 +430,13 @@ class Manager():
         url = self.url+lab
         if os.path.exists("./base/"):
             shutil.rmtree("./base/")
-        base_repo = Repo.clone_from(self.insert_auth(url), "./base/")
+        base_repo = Repo.clone_from(fileIO.auth_url(url), "./base/")
         return base_repo, url
 
     def assign_repos(self, lab, base):
         teams = self.org.get_teams()
         teams = [team for team in teams if "team" in team.name]
-        urls = self.load_repos()
+        urls = fileIO.load_repos()
         for team in teams:
             repos = team.get_repos()
             repos = [repo.name for repo in repos]
@@ -485,7 +465,7 @@ class Manager():
                     print e
                     return False
 
-        self.write_repos(urls)
+        fileIO.dump_repos(urls)
         return True 
 
     # Param:
@@ -542,7 +522,7 @@ class Manager():
             clone_path = "./submissions/{}/{}/".format(lab, team)
             if os.path.exists(clone_path):
                 shutil.rmtree(clone_path)
-            Repo.clone_from(self.insert_auth(url), clone_path)
+            Repo.clone_from(fileIO.auth_url(url), clone_path)
             commit = self.get_repo_by_deadline(team, lab)
             subprocess.call(["./utils/rollback.sh", clone_path, commit])
         
@@ -550,7 +530,7 @@ class Manager():
         base_path = "./submissions/{}/base/".format(lab)
         if os.path.exists(base_path):
             shutil.rmtree(base_path)
-        Repo.clone_from(self.insert_auth(base_url), base_path)
+        Repo.clone_from(fileIO.auth_url(base_url), base_path)
 
     # Param:
     #   Lab: Which lab/assignment will be deleted
@@ -603,7 +583,7 @@ class Manager():
                 
     def set_hooks(self, lab):
         print "Setting webhooks."
-        urls = self.load_repos()
+        urls = fileIO.load_repos()
         if "base" in urls:
             del urls["base"]
         for team,repos in urls.items():
@@ -636,20 +616,23 @@ class Manager():
 
     def make_jobs_DSL(self, lab):
         print "Writing a jenkins jobs file to ./jenkins/jobs.groovy"
-        self.write_jobs_repos(lab)
-        out = ""
-        files = ["./jenkins/components/j_config.groovy", 
-                 "./jenkins/components/j_repos.groovy",
-                 "./jenkins/components/j_pre.groovy",  
-                 "./jenkins/components/{}".format(lab),
-                 "./jenkins/components/j_post.groovy"]
-        for f in files:
-            f = open(f, "r")
-            out += f.read() + "\n"
+        if os.path.isfile("./jenkins/components/{}".format(lab)):
+            self.write_jobs_repos(lab)
+            out = ""
+            files = ["./jenkins/components/j_config.groovy", 
+                     "./jenkins/components/j_repos.groovy",
+                     "./jenkins/components/j_pre.groovy",  
+                     "./jenkins/components/{}".format(lab),
+                     "./jenkins/components/j_post.groovy"]
+            for f in files:
+                f = open(f, "r")
+                out += f.read() + "\n"
+                f.close()
+            f = open("./jenkins/{}.groovy".format(lab), "w")
+            f.write(out)
             f.close()
-        f = open("./jenkins/{}.groovy".format(lab), "w")
-        f.write(out)
-        f.close()
+        else:
+            print "You do not have testing steps defined for {}.".format(lab)
 
 
     # NOTIFICATION METHODS
@@ -662,7 +645,7 @@ class Manager():
     #   that the lab has been assigned.
     def notify_all(self, lab):
         teams = [team for team in self.org.get_teams() if "team" in team.name]
-        urls = self.load_repos()
+        urls = fileIO.load_repos()
         log2email = fileIO.load_login_to_email()
 
         emails = []
@@ -676,11 +659,6 @@ class Manager():
                     url = urls[team.name][lab]
                     msg = "Starter code for {} has been distributed.  You can find this code at {}".format(lab, url)
                     emails.append({"receiver": contact, "subject": lab, "message": msg})
-                    # try:
-                    #    notify(contact, team.name, lab, url)
-                    #    print("{} is notified that {} is distributed.".format(member.login, lab))
-                    #except:
-                    #    print("ERROR: SENDING THE NOTIFICATION TO {} at {} HAS FAILED.".format(member.login, contact))
             else:
                 print("ERROR: YOU ARE ATTEMPTING TO NOTIFY {} ABOUT A REPO THEY HAVE NOT BEEN ASSIGNED.".format(team.name))
 
@@ -750,9 +728,7 @@ class Manager():
 
     # HOUSEKEEPING METHODS
     #----------------------------------------------------------------------------------
-
-
-
+    
     # Purpose:
     #   Generate a repo name given a team name and a lab/assignment name
     #   to reduce floating magic strings
@@ -798,57 +774,10 @@ class Manager():
     def remove_local(self):
         shutil.rmtree("./base/")
 
-    # Param:
-    #   url: string representation of a GitHub resource.
-    # Purpose:
-    #   Inserts an oauth token in the url to make access easier, and to keep from committing 
-    #   oauth tokens to git repos.  It lets the url remain unaltered at the higher scope.
-    #   Needed for access using GitPython (different interface from PyGitHub).
-    # Returns:
-    #   The url, but with oauth token inserted
-    def insert_auth(self, url):
-        token = fileIO.read_token()
-        url = url[:url.find("://")+3] + token + ":x-oauth-basic@" + url[url.find("github"):]
-        return url
 
-    # Purpose:
-    #   To read the repos assigned to teams from file.
-    def load_repos(self):
-        try:
-            f = open("./config/repos.json", "r")
-            repos = json.load(f)
-            f.close()
-            return repos
-        except:
-            return {}
-
-    # Purpose:
-    #   To save the repos assigned to teams to file.
-    def write_repos(self, urls):
-        print "Writing repo urls to ./config/repos.json."
-        f = open("./config/repos.json", "w")
-        repos = json.dump(urls, f)
-        f.close()
 
 def parse_date(date):
     return datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-
-def save_max_team(number):
-    f = open("./config/max_team.txt", "w")
-    f.write(number)
-    f.close()
-
-def read_max_team():
-    f = open("./config/max_team.txt", "r")
-    i = f.read()
-    f.close()
-    return i
-
-def get_assigned_repos():
-    f = open("./config/assigned_repos.json", "r")
-    repos = json.load(f)
-    f.close
-    return repos
 
 # GitHub IO Functions
 def get_remote_teams(org):
